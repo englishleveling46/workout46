@@ -58,33 +58,38 @@
         </div>
 
         <div id="main-content" class="px-4 py-4 pb-20">
+            <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" style="display: none;">
+                <div class="text-center">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-purple-400 mb-4"></i>
+                    <p class="text-lg font-medium">Đang tải dữ liệu...</p>
+                </div>
             </div>
+        </div>
     </div>
 
     <script>
         // --- Global state variables ---
-        let workouts = []; // Bài tập cho ngày hiện tại (checklist)
-        let allWorkouts = []; // Danh sách chính của tất cả các bài tập có sẵn (thư viện)
+        let workouts = []; 
+        let allWorkouts = []; 
         let streak = 0;
-        let totalWorkouts = 0; // Tổng số bài tập đã thêm từ trước đến nay
-        let weeklyStats = []; // Lưu trữ tóm tắt hàng ngày { date: 'YYYY-MM-DD', total: X, completed: Y, exercises: [...] }
-        let currentTab = 'today'; // 'today', 'my-workouts', 'stats'
-        let showAddWorkoutFormToday = false; // Điều khiển hiển thị của form "Thêm bài tập mới" trên tab "Hôm nay"
-        let showAddWorkoutFormMyWorkouts = false; // Điều khiển hiển thị của form "Thêm bài tập mới" trên tab "Bài tập của tôi"
+        let totalWorkouts = 0; 
+        let weeklyStats = []; 
+        let currentTab = 'today'; 
+        let showAddWorkoutFormToday = false; 
+        let showAddWorkoutFormMyWorkouts = false; 
+        let isLoading = true; // New state for loading data
 
         let currentDayString = new Date().toISOString().split('T')[0];
         let streakLastAchievedDate = null; 
 
         const MAX_WEEKLY_STATS_DAYS = 30; 
 
-        // Removed categoryColors and categories arrays
-
         // URL của Google Apps Script Web App của bạn
         const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNt3aA4dIPUsikuqzWC0xbmel36Bi-3JASaw0u8xLW6iyra3UyHf_Mz1ViojiYZWI/exec';
 
         // Biến và hàm debounce để giới hạn tần suất gửi dữ liệu đến Google Sheet
         let sendDataTimeout = null;
-        const DEBOUNCE_DELAY = 1500; // Gửi dữ liệu sau 1.5 giây kể từ lần thay đổi cuối cùng
+        const DEBOUNCE_DELAY = 1500; 
 
         function debounceSendDataToGoogleSheet() {
             clearTimeout(sendDataTimeout);
@@ -118,42 +123,6 @@
         }
 
         // --- LocalStorage Functions ---
-        function loadFromLocalStorage() {
-            try {
-                const storedWorkouts = localStorage.getItem('workouts');
-                if (storedWorkouts) workouts = JSON.parse(storedWorkouts);
-
-                const storedAllWorkouts = localStorage.getItem('allWorkouts');
-                if (storedAllWorkouts) allWorkouts = JSON.parse(storedAllWorkouts);
-
-                const storedStreak = localStorage.getItem('streak');
-                if (storedStreak) streak = parseInt(storedStreak, 10);
-
-                const storedTotalWorkouts = localStorage.getItem('totalWorkouts');
-                if (storedTotalWorkouts) totalWorkouts = parseInt(storedTotalWorkouts, 10);
-
-                const storedWeeklyStats = localStorage.getItem('weeklyStats');
-                if (storedWeeklyStats) weeklyStats = JSON.parse(storedWeeklyStats);
-
-                const storedCurrentDayString = localStorage.getItem('currentDayString');
-                if (storedCurrentDayString) currentDayString = storedCurrentDayString;
-                else currentDayString = getTodayDateString(); 
-
-                const storedStreakLastAchievedDate = localStorage.getItem('streakLastAchievedDate');
-                if (storedStreakLastAchievedDate) streakLastAchievedDate = storedStreakLastAchievedDate;
-
-            } catch (error) {
-                console.error("Error loading data from localStorage:", error);
-                workouts = [];
-                allWorkouts = [];
-                streak = 0;
-                totalWorkouts = 0;
-                weeklyStats = [];
-                currentDayString = getTodayDateString();
-                streakLastAchievedDate = null;
-            }
-        }
-
         function saveToLocalStorage() {
             localStorage.setItem('workouts', JSON.stringify(workouts));
             localStorage.setItem('allWorkouts', JSON.stringify(allWorkouts));
@@ -167,9 +136,82 @@
                 localStorage.removeItem('streakLastAchievedDate');
             }
             
-            // Tự động gửi dữ liệu lên Google Sheet sau khi lưu vào localStorage
             debounceSendDataToGoogleSheet();
         }
+
+        async function loadData() {
+            isLoading = true;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            lucide.createIcons(); // Render loading icon
+
+            let loadedFromLocalStorage = false;
+            try {
+                const storedWorkouts = localStorage.getItem('workouts');
+                const storedAllWorkouts = localStorage.getItem('allWorkouts');
+                const storedStreak = localStorage.getItem('streak');
+                const storedTotalWorkouts = localStorage.getItem('totalWorkouts');
+                const storedWeeklyStats = localStorage.getItem('weeklyStats');
+                const storedCurrentDayString = localStorage.getItem('currentDayString');
+
+                if (storedAllWorkouts && storedWeeklyStats) { // Check for essential data
+                    workouts = storedWorkouts ? JSON.parse(storedWorkouts) : [];
+                    allWorkouts = JSON.parse(storedAllWorkouts);
+                    streak = storedStreak ? parseInt(storedStreak, 10) : 0;
+                    totalWorkouts = storedTotalWorkouts ? parseInt(storedTotalWorkouts, 10) : 0;
+                    weeklyStats = JSON.parse(storedWeeklyStats);
+                    currentDayString = storedCurrentDayString || getTodayDateString();
+                    streakLastAchievedDate = localStorage.getItem('streakLastAchievedDate');
+                    loadedFromLocalStorage = true;
+                    console.log("Data loaded from localStorage.");
+                }
+            } catch (error) {
+                console.error("Error loading data from localStorage:", error);
+                // If localStorage is corrupted, proceed to fetch from sheet
+                loadedFromLocalStorage = false;
+            }
+
+            if (!loadedFromLocalStorage) {
+                console.log("localStorage empty or corrupted, fetching from Google Sheet...");
+                try {
+                    const response = await fetch(GOOGLE_APPS_SCRIPT_URL + '?action=get', {
+                        method: 'GET',
+                        mode: 'cors' // Use 'cors' for GET requests
+                    });
+                    const data = await response.json();
+                    console.log("Data fetched from Google Sheet:", data);
+
+                    // Populate global state with fetched data
+                    allWorkouts = data.allWorkouts || [];
+                    weeklyStats = data.weeklyStats || [];
+                    streak = data.streak || 0;
+                    totalWorkouts = data.totalWorkouts || 0;
+                    
+                    // For daily workouts, we don't load them directly from sheet on startup
+                    // as they are reset daily. If the user wants to re-add, they can use "Bài tập của tôi".
+                    workouts = []; // Ensure daily workouts are empty on fresh load
+                    currentDayString = getTodayDateString(); // Always set current day string to today
+
+                    // Save fetched data to localStorage for future quick loads
+                    saveToLocalStorage(); 
+
+                } catch (error) {
+                    console.error("Error fetching data from Google Sheet:", error);
+                    alert("Lỗi khi tải dữ liệu từ Google Sheet. Ứng dụng sẽ khởi động với dữ liệu trống.");
+                    // Fallback to empty state if fetch fails
+                    workouts = [];
+                    allWorkouts = [];
+                    streak = 0;
+                    totalWorkouts = 0;
+                    weeklyStats = [];
+                    currentDayString = getTodayDateString();
+                    streakLastAchievedDate = null;
+                }
+            }
+            
+            isLoading = false;
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
 
         // --- Daily Rollover and Stats Update Logic ---
         function initializeAppAndHandleDailyRollover() {
@@ -178,18 +220,22 @@
             if (currentDayString !== todayStr) { 
                 const pastDayActualCompletions = workouts.filter(w => w.completed).length;
                 const pastDayTotalTasks = workouts.length;
-                const lastDayStats = {
-                    date: currentDayString, 
-                    total: pastDayTotalTasks,
-                    completed: pastDayActualCompletions,
-                    exercises: workouts.map(w => w.name) 
-                };
-                const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
-                if (existingStatIndex > -1) {
-                    weeklyStats[existingStatIndex] = lastDayStats;
-                } else {
-                    weeklyStats.push(lastDayStats);
+                const lastDayStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+                
+                // Only update past day's stats if it was the actual yesterday
+                if (lastDayStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
+                    weeklyStats[lastDayStatIndex].total = pastDayTotalTasks;
+                    weeklyStats[lastDayStatIndex].completed = pastDayActualCompletions;
+                    weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name);
+                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // Add new entry if data exists for a past day not yet logged
+                     weeklyStats.push({
+                        date: currentDayString, 
+                        total: pastDayTotalTasks,
+                        completed: pastDayActualCompletions,
+                        exercises: workouts.map(w => w.name) 
+                    });
                 }
+                
                 weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
                 if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
                     weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
@@ -537,7 +583,6 @@
 
             allWorkouts.forEach(workout => {
                 const workoutItem = document.createElement('div');
-                // Removed opacity-0 group-hover:opacity-100 from the parent div to ensure the remove button is always visible
                 workoutItem.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 workoutItem.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1">
@@ -707,6 +752,21 @@
 
         // --- Core Application Render Function ---
         function renderApp() {
+            if (isLoading) {
+                document.getElementById('loading-overlay').style.display = 'flex';
+                document.getElementById('main-content').innerHTML = `
+                    <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+                        <div class="text-center">
+                            <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-purple-400 mb-4"></i>
+                            <p class="text-lg font-medium">Đang tải dữ liệu...</p>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+
             renderHeader();
             if (currentTab === 'today') {
                 renderTodayTab();
@@ -873,20 +933,18 @@
 
         // --- Function to send data to Google Apps Script ---
         async function sendDataToGoogleSheet() {
-            // Kiểm tra URL Apps Script
             if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !GOOGLE_APPS_SCRIPT_URL) {
                 console.error("Vui lòng cập nhật GOOGLE_APPS_SCRIPT_URL với URL triển khai của bạn.");
                 alert("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
                 return;
             }
 
-            // Chuẩn bị dữ liệu để gửi
             const dataToSend = {
                 workouts: workouts,
                 streak: streak,
                 totalWorkouts: totalWorkouts,
                 weeklyStats: weeklyStats,
-                allWorkouts: allWorkouts, // Đảm bảo allWorkouts được gửi
+                allWorkouts: allWorkouts, 
                 currentDayString: getTodayDateString()
             };
 
@@ -898,12 +956,12 @@
                     lucide.createIcons();
                 }
 
-                console.log("Đang gửi dữ liệu đến Google Sheet...");
+                console.log("Đang gửi dữ liệu đến Google Sheet (doPost)...");
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Sử dụng 'no-cors' để tránh vấn đề CORS
+                    mode: 'no-cors', 
                     headers: {
-                        'Content-Type': 'text/plain;charset=utf-8', // Quan trọng cho 'no-cors'
+                        'Content-Type': 'text/plain;charset=utf-8', 
                     },
                     body: JSON.stringify(dataToSend)
                 });
@@ -924,19 +982,19 @@
         }
 
         // --- Event Listeners and Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFromLocalStorage(); 
-            initializeAppAndHandleDailyRollover(); 
-            
+        document.addEventListener('DOMContentLoaded', async () => {
             updateLiveDateTime();
             setInterval(updateLiveDateTime, 1000);
 
-            renderApp();
+            await loadData(); // Load data from localStorage or Google Sheet first
+            initializeAppAndHandleDailyRollover(); 
+            
+            renderApp(); // Initial render of the main app content
 
             document.getElementById('today-tab-btn').addEventListener('click', () => {
                 currentTab = 'today';
                 showAddWorkoutFormToday = false;
-                showAddWorkoutFormMyWorkouts = false;
+                showAddWorkoutFormMyWorkouts = false; 
                 renderApp();
             });
             document.getElementById('my-workouts-tab-btn').addEventListener('click', () => {
