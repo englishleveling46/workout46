@@ -85,6 +85,7 @@
         const MAX_WEEKLY_STATS_DAYS = 30; 
 
         // URL của Google Apps Script Web App của bạn
+        // Đảm bảo URL này là URL triển khai mới nhất của bạn từ Google Apps Script
         const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNt3aA4dIPUsikuqzWC0xbmel36Bi-3JASaw0u8xLW6iyra3UyHf_Mz1ViojiYZWI/exec';
 
         // Biến và hàm debounce để giới hạn tần suất gửi dữ liệu đến Google Sheet
@@ -175,7 +176,7 @@
                 try {
                     const response = await fetch(GOOGLE_APPS_SCRIPT_URL + '?action=get', {
                         method: 'GET',
-                        mode: 'cors' // Use 'cors' for GET requests
+                        mode: 'cors' // CHANGED: Use 'cors' for GET requests
                     });
                     const data = await response.json();
                     console.log("Data fetched from Google Sheet:", data);
@@ -196,7 +197,8 @@
 
                 } catch (error) {
                     console.error("Error fetching data from Google Sheet:", error);
-                    alert("Lỗi khi tải dữ liệu từ Google Sheet. Ứng dụng sẽ khởi động với dữ liệu trống.");
+                    // Sử dụng modal thay vì alert
+                    showMessageBox("Lỗi khi tải dữ liệu từ Google Sheet. Ứng dụng sẽ khởi động với dữ liệu trống.");
                     // Fallback to empty state if fetch fails
                     workouts = [];
                     allWorkouts = [];
@@ -799,14 +801,8 @@
             const imageUrl = imageUrlInput.value.trim();
 
             if (!name || !sets) {
-                const errorMsgContainer = document.getElementById('add-new-workout-form-today').querySelector('.form-error-message');
-                if (errorMsgContainer) errorMsgContainer.remove();
-
-                const newErrorMsg = document.createElement('p');
-                newErrorMsg.textContent = "Tên bài tập và Sets không được để trống!";
-                newErrorMsg.className = "text-red-400 text-xs mt-2 form-error-message";
-                document.getElementById('add-new-workout-form-today').appendChild(newErrorMsg);
-                setTimeout(() => newErrorMsg.remove(), 3000);
+                // Sử dụng modal thay vì alert
+                showMessageBox("Tên bài tập và Sets không được để trống!");
                 return;
             }
 
@@ -855,20 +851,15 @@
             const imageUrl = imageUrlInput.value.trim();
 
             if (!name || !sets) {
-                const errorMsgContainer = document.getElementById('add-new-workout-form-my-workouts').querySelector('.form-error-message');
-                if (errorMsgContainer) errorMsgContainer.remove();
-
-                const newErrorMsg = document.createElement('p');
-                newErrorMsg.textContent = "Tên bài tập và Sets không được để trống!";
-                newErrorMsg.className = "text-red-400 text-xs mt-2 form-error-message";
-                document.getElementById('add-new-workout-form-my-workouts').appendChild(newErrorMsg);
-                setTimeout(() => newErrorMsg.remove(), 3000);
+                // Sử dụng modal thay vì alert
+                showMessageBox("Tên bài tập và Sets không được để trống!");
                 return;
             }
 
             // Kiểm tra trùng lặp trước khi thêm vào allWorkouts
             if (allWorkouts.some(w => w.name === name && w.sets === sets)) {
-                alert("Bài tập này đã tồn tại trong danh sách chính!");
+                // Sử dụng modal thay vì alert
+                showMessageBox("Bài tập này đã tồn tại trong danh sách chính!");
                 return;
             }
 
@@ -907,10 +898,12 @@
                     totalWorkouts++; 
                     updateCurrentDayWeeklyStat();
                     saveToLocalStorage();
-                    alert("Đã thêm bài tập vào danh sách hôm nay!");
+                    // Sử dụng modal thay vì alert
+                    showMessageBox("Đã thêm bài tập vào danh sách hôm nay!");
                     renderApp(); 
                 } else {
-                    alert("Bài tập này đã có trong danh sách hôm nay!");
+                    // Sử dụng modal thay vì alert
+                    showMessageBox("Bài tập này đã có trong danh sách hôm nay!");
                 }
             }
         }
@@ -924,18 +917,20 @@
 
         // Hàm để xóa bài tập khỏi danh sách chính
         function removeMasterWorkout(id) {
-            if (confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
+            // Sử dụng modal thay vì confirm
+            showConfirmBox("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?", () => {
                 allWorkouts = allWorkouts.filter(workout => workout.id !== id);
                 saveToLocalStorage();
                 renderApp();
-            }
+            });
         }
 
         // --- Function to send data to Google Apps Script ---
         async function sendDataToGoogleSheet() {
             if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !GOOGLE_APPS_SCRIPT_URL) {
                 console.error("Vui lòng cập nhật GOOGLE_APPS_SCRIPT_URL với URL triển khai của bạn.");
-                alert("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
+                // Sử dụng modal thay vì alert
+                showMessageBox("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
                 return;
             }
 
@@ -959,18 +954,27 @@
                 console.log("Đang gửi dữ liệu đến Google Sheet (doPost)...");
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', 
+                    mode: 'cors', // CHANGED: Use 'cors'
                     headers: {
-                        'Content-Type': 'text/plain;charset=utf-8', 
+                        'Content-Type': 'application/json', // CHANGED: Use 'application/json'
                     },
                     body: JSON.stringify(dataToSend)
                 });
 
-                console.log("Dữ liệu đã được gửi. Kiểm tra Google Sheet của bạn.");
+                // Kiểm tra phản hồi từ Apps Script
+                const result = await response.json();
+                if (result.success) {
+                    console.log("Dữ liệu đã được gửi. Kiểm tra Google Sheet của bạn.");
+                    showMessageBox("Dữ liệu đã được lưu thành công!");
+                } else {
+                    console.error("Lỗi từ Google Apps Script:", result.message);
+                    showMessageBox("Lỗi khi lưu dữ liệu: " + result.message);
+                }
 
             } catch (error) {
                 console.error("Lỗi khi gửi dữ liệu đến Google Sheet:", error);
-                alert("Lỗi khi lưu dữ liệu. Vui lòng kiểm tra console để biết chi tiết.");
+                // Sử dụng modal thay vì alert
+                showMessageBox("Lỗi khi lưu dữ liệu. Vui lòng kiểm tra console để biết chi tiết.");
             } finally {
                 const saveButton = document.getElementById('save-data-to-sheet-btn');
                 if (saveButton) {
@@ -980,6 +984,63 @@
                 }
             }
         }
+
+        // --- Custom Modal Functions (thay thế alert/confirm) ---
+        function createModalContainer() {
+            let modalContainer = document.getElementById('custom-modal-container');
+            if (!modalContainer) {
+                modalContainer = document.createElement('div');
+                modalContainer.id = 'custom-modal-container';
+                modalContainer.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4';
+                document.body.appendChild(modalContainer);
+            }
+            modalContainer.innerHTML = ''; // Clear previous content
+            return modalContainer;
+        }
+
+        function showMessageBox(message) {
+            const modalContainer = createModalContainer();
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full text-center border border-gray-700';
+            modalContent.innerHTML = `
+                <p class="text-white text-lg mb-4">${message}</p>
+                <button id="modal-ok-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    OK
+                </button>
+            `;
+            modalContainer.appendChild(modalContent);
+
+            document.getElementById('modal-ok-btn').onclick = () => {
+                modalContainer.remove();
+            };
+        }
+
+        function showConfirmBox(message, onConfirm) {
+            const modalContainer = createModalContainer();
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full text-center border border-gray-700';
+            modalContent.innerHTML = `
+                <p class="text-white text-lg mb-4">${message}</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="modal-confirm-yes-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Có
+                    </button>
+                    <button id="modal-confirm-no-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Không
+                    </button>
+                </div>
+            `;
+            modalContainer.appendChild(modalContent);
+
+            document.getElementById('modal-confirm-yes-btn').onclick = () => {
+                modalContainer.remove();
+                if (onConfirm) onConfirm();
+            };
+            document.getElementById('modal-confirm-no-btn').onclick = () => {
+                modalContainer.remove();
+            };
+        }
+
 
         // --- Event Listeners and Initial Load ---
         document.addEventListener('DOMContentLoaded', async () => {
