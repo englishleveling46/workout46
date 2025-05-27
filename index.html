@@ -99,38 +99,38 @@
     <div id="message-area" class="fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform -translate-y-full opacity-0" style="min-width: 250px;"></div>
 
     <script>
-        // Biến trạng thái toàn cục
-        let workouts = []; // Bài tập hàng ngày
-        let allWorkouts = []; // Danh sách tổng hợp các bài tập
+        // Global state variables
+        let workouts = []; // Daily workouts
+        let allWorkouts = []; // Master list of workouts
         let streak = 0;
         let totalWorkouts = 0;
         let weeklyStats = [];
         let currentTab = 'today';
         let showAddWorkoutFormToday = false;
         let showAddWorkoutFormMyWorkouts = false;
-        let isLoading = true; // Trạng thái mới để tải dữ liệu
+        let isLoading = true; // New state for data loading
 
         let currentDayString = new Date().toISOString().split('T')[0];
         let streakLastAchievedDate = null;
 
         const MAX_WEEKLY_STATS_DAYS = 30;
 
-        // Cấu hình Supabase
-        const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // URL dự án Supabase của bạn
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvPZnloye8'; // Khóa ẩn danh Supabase của bạn
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // Your Supabase project URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvZPnloye8'; // Your Supabase anonymous key
 
-        // Khởi tạo client Supabase
+        // Initialize Supabase client
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let userId = null; // ID người dùng hiện tại đã xác thực
+        let userId = null; // Current authenticated user ID
 
-        // Hàm tiện ích
+        // Utility functions
         function getTodayDateString() {
             return new Date().toISOString().split('T')[0];
         }
 
-        // Hàm hiển thị thông báo tùy chỉnh
+        // Function to display custom messages
         function showMessage(message, type = 'info') {
             const messageArea = document.getElementById('message-area');
             messageArea.textContent = message;
@@ -139,18 +139,18 @@
                 type === 'error' ? 'bg-red-500' :
                 'bg-blue-500'
             }`;
-            // Hiển thị động
+            // Animate in
             messageArea.style.transform = 'translateY(0)';
             messageArea.style.opacity = '1';
 
             setTimeout(() => {
-                // Ẩn động
+                // Animate out
                 messageArea.style.transform = 'translateY(-100%)';
                 messageArea.style.opacity = '0';
-            }, 3000); // Thông báo biến mất sau 3 giây
+            }, 3000); // Message disappears after 3 seconds
         }
 
-        // Hàm đồng hồ thời gian thực
+        // Live clock function
         function updateLiveDateTime() {
             const currentDateElement = document.getElementById('current-date');
             if (currentDateElement) {
@@ -169,11 +169,19 @@
             }
         }
 
-        // Hàm dữ liệu Supabase
+        // Supabase data function
         async function loadDataFromSupabase() {
             isLoading = true;
             document.getElementById('loading-overlay').style.display = 'flex';
-            lucide.createIcons(); // Hiển thị biểu tượng tải
+            lucide.createIcons(); // Display loading icon
+
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng!", "error");
+                document.getElementById('loading-overlay').style.display = 'none';
+                isLoading = false;
+                return;
+            }
 
             if (!userId) {
                 console.warn("Người dùng chưa xác thực. Không thể tải dữ liệu từ Supabase.");
@@ -181,47 +189,59 @@
                 document.getElementById('loading-overlay').style.display = 'none';
                 return;
             }
+            
+            // Add timeout to prevent infinite loading
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout fetching data")), 10000) // 10 seconds timeout
+            );
 
             try {
-                // Tải bài tập hàng ngày cho hôm nay
-                const { data: dailyWorkoutsData, error: dailyWorkoutsError } = await supabaseClient
-                    .from('daily_workouts')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .eq('workout_date', getTodayDateString());
+                const dataPromises = Promise.all([
+                    // Load daily workouts for today
+                    supabaseClient
+                        .from('daily_workouts')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .eq('workout_date', getTodayDateString()),
 
-                if (dailyWorkoutsError) throw dailyWorkoutsError;
-                workouts = dailyWorkoutsData || [];
+                    // Load all master workouts
+                    supabaseClient
+                        .from('all_workouts')
+                        .select('*'),
+
+                    // Load user stats
+                    supabaseClient
+                        .from('user_stats')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .single() // Expect only one row per user
+                ]);
+
+                const [dailyWorkoutsResponse, allWorkoutsResponse, userStatsResponse] = await Promise.race([dataPromises, timeoutPromise]);
+
+                // Process daily workouts
+                if (dailyWorkoutsResponse.error) throw dailyWorkoutsResponse.error;
+                workouts = dailyWorkoutsResponse.data || [];
                 console.log("Bài tập hàng ngày đã tải:", workouts);
 
-                // Tải tất cả các bài tập chính
-                const { data: allWorkoutsData, error: allWorkoutsError } = await supabaseClient
-                    .from('all_workouts')
-                    .select('*');
-
-                if (allWorkoutsError) throw allWorkoutsError;
-                allWorkouts = allWorkoutsData || [];
+                // Process all master workouts
+                if (allWorkoutsResponse.error) throw allWorkoutsResponse.error;
+                allWorkouts = allWorkoutsResponse.data || [];
                 console.log("Tất cả các bài tập chính đã tải:", allWorkouts);
 
-                // Tải thống kê người dùng
-                const { data: userStatsData, error: userStatsError } = await supabaseClient
-                    .from('user_stats')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .single(); // Chỉ mong đợi một hàng cho mỗi người dùng
-
-                if (userStatsError && userStatsError.code !== 'PGRST116') { // PGRST116 có nghĩa là không tìm thấy hàng nào (chưa có dữ liệu cho người dùng này)
-                    throw userStatsError;
+                // Process user stats
+                if (userStatsResponse.error && userStatsResponse.error.code !== 'PGRST116') { // PGRST116 means no rows found (no data for this user yet)
+                    throw userStatsResponse.error;
                 }
 
-                if (userStatsData) {
-                    streak = userStatsData.streak || 0;
-                    totalWorkouts = userStatsData.total_workouts || 0;
-                    weeklyStats = userStatsData.weekly_stats || [];
-                    streakLastAchievedDate = userStatsData.streak_last_achieved_date;
+                if (userStatsResponse.data) {
+                    streak = userStatsResponse.data.streak || 0;
+                    totalWorkouts = userStatsResponse.data.total_workouts || 0;
+                    weeklyStats = userStatsResponse.data.weekly_stats || [];
+                    streakLastAchievedDate = userStatsResponse.data.streak_last_achieved_date;
                     console.log("Thống kê người dùng đã tải:", { streak, totalWorkouts, weeklyStats, streakLastAchievedDate });
                 } else {
-                    // Nếu không có thống kê người dùng, hãy khởi tạo chúng
+                    // If no user stats, initialize them
                     const { error: insertError } = await supabaseClient.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
                     if (insertError) throw insertError;
                     console.log("Đã khởi tạo thống kê người dùng mới.");
@@ -232,7 +252,7 @@
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu từ Supabase:", error);
                 showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Ứng dụng sẽ khởi động với dữ liệu trống.`, "error");
-                // Quay lại trạng thái trống nếu tìm nạp thất bại
+                // Fallback to empty state if fetch fails
                 workouts = [];
                 allWorkouts = [];
                 streak = 0;
@@ -245,12 +265,18 @@
             }
         }
 
-        // Hàm này chủ yếu để lưu thống kê người dùng và các bài tập chính.
-        // Các thay đổi bài tập hàng ngày được xử lý bởi các hàm cụ thể của chúng (thêm, bật/tắt, xóa).
+        // This function is primarily for saving user stats and master workouts.
+        // Daily workout changes are handled by their specific functions (add, toggle, remove).
         async function saveDataToSupabase() {
             if (!userId) {
                 console.warn("Người dùng chưa xác thực. Không thể lưu dữ liệu vào Supabase.");
                 showMessage("Lỗi: Bạn cần đăng nhập để lưu dữ liệu.", "error");
+                return;
+            }
+
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể lưu dữ liệu.", "error");
                 return;
             }
 
@@ -262,18 +288,18 @@
                     lucide.createIcons();
                 }
 
-                // Lưu thống kê người dùng
+                // Save user stats
                 const userStatsToSave = {
                     user_id: userId,
                     streak: streak,
                     total_workouts: totalWorkouts,
-                    weekly_stats: weeklyStats, // JSONB sẽ xử lý mảng/đối tượng
+                    weekly_stats: weeklyStats, // JSONB will handle array/object
                     streak_last_achieved_date: streakLastAchievedDate
                 };
 
                 const { error: userStatsUpsertError } = await supabaseClient
                     .from('user_stats')
-                    .upsert(userStatsToSave, { onConflict: 'user_id' }); // Xung đột trên 'user_id'
+                    .upsert(userStatsToSave, { onConflict: 'user_id' }); // Conflict on 'user_id'
 
                 if (userStatsUpsertError) throw userStatsUpsertError;
 
@@ -292,7 +318,7 @@
             }
         }
 
-        // Logic cập nhật hàng ngày và thống kê
+        // Daily update and stats logic
         function initializeAppAndHandleDailyRollover() {
             const todayStr = getTodayDateString();
 
@@ -301,12 +327,12 @@
                 const pastDayTotalTasks = workouts.length;
                 const lastDayStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
 
-                // Chỉ cập nhật thống kê của ngày hôm qua nếu đó là ngày hôm qua thực sự
+                // Only update yesterday's stats if it was actually yesterday
                 if (lastDayStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
                     weeklyStats[lastDayStatIndex].total = pastDayTotalTasks;
                     weeklyStats[lastDayStatIndex].completed = pastDayActualCompletions;
                     weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name);
-                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // Thêm mục mới nếu dữ liệu tồn tại cho một ngày trong quá khứ chưa được ghi lại
+                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // Add new entry if data exists for a past day not yet recorded
                      weeklyStats.push({
                         date: currentDayString,
                         total: pastDayTotalTasks,
@@ -339,7 +365,7 @@
                         streakLastAchievedDate = null;
                     }
                 }
-                workouts = []; // Đặt lại bài tập hàng ngày cho ngày mới
+                workouts = []; // Reset daily workouts for the new day
                 currentDayString = todayStr;
             }
             updateCurrentDayWeeklyStat();
@@ -366,10 +392,10 @@
             if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
                 weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
             }
-            saveDataToSupabase(); // Lưu vào Supabase (chủ yếu là thống kê người dùng)
+            saveDataToSupabase(); // Save to Supabase (primarily user stats)
         }
 
-        // Hàm trợ giúp (để hiển thị UI)
+        // Helper functions (for UI display)
         function getCompletedCount() {
             return workouts.filter(w => w.completed).length;
         }
@@ -416,7 +442,7 @@
             return relevantStats.reduce((sum, day) => sum + day.completed, 0);
         }
 
-        // Hàm hiển thị UI
+        // UI rendering functions
         function renderHeader() {
             const todayTabBtn = document.getElementById('today-tab-btn');
             const myWorkoutsTabBtn = document.getElementById('my-workouts-tab-btn');
@@ -526,7 +552,7 @@
                 showAddWorkoutFormToday = true;
                 renderApp();
             };
-            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToSupabase; // Đã thay đổi thành lưu Supabase
+            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToSupabase; // Changed to Supabase save
 
             if (showAddWorkoutFormToday) {
                 document.getElementById('close-add-form-today-btn').onclick = () => {
@@ -829,16 +855,16 @@
             lucide.createIcons();
         }
 
-        // Hàm hiển thị ứng dụng chính
+        // Main app rendering function
         function renderApp() {
-            // Hiển thị hoặc ẩn overlay tải dựa trên trạng thái isLoading
+            // Show or hide loading overlay based on isLoading state
             if (isLoading) {
                 document.getElementById('loading-overlay').style.display = 'flex';
             } else {
                 document.getElementById('loading-overlay').style.display = 'none';
             }
 
-            // Tiếp tục render các phần còn lại của ứng dụng
+            // Continue rendering the rest of the application
             renderHeader();
             if (currentTab === 'today') {
                 renderTodayTab();
@@ -850,24 +876,30 @@
             lucide.createIcons();
         }
 
-        // Hàm quản lý bài tập (Logic)
+        // Workout management functions (Logic)
         async function toggleWorkout(id) {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể cập nhật trạng thái bài tập.", "error");
+                return;
+            }
+
             const workoutIndex = workouts.findIndex(w => w.id === id);
             if (workoutIndex > -1) {
                 const newCompletedStatus = !workouts[workoutIndex].completed;
                 workouts[workoutIndex].completed = newCompletedStatus;
 
-                // Cập nhật trong Supabase
+                // Update in Supabase
                 const { error } = await supabaseClient
                     .from('daily_workouts')
                     .update({ completed: newCompletedStatus })
                     .eq('id', id)
-                    .eq('user_id', userId); // Đảm bảo user_id cho RLS
+                    .eq('user_id', userId); // Ensure user_id for RLS
 
                 if (error) {
                     console.error("Lỗi khi cập nhật trạng thái bài tập:", error);
                     showMessage("Lỗi khi cập nhật trạng thái bài tập.", "error");
-                    // Hoàn nguyên trạng thái cục bộ nếu cập nhật Supabase thất bại
+                    // Revert local state if Supabase update fails
                     workouts[workoutIndex].completed = !newCompletedStatus;
                 } else {
                     updateCurrentDayWeeklyStat();
@@ -876,22 +908,28 @@
             }
         }
 
-        // Hàm để thêm bài tập mới từ tab "Hôm nay"
+        // Function to add new workout from "Today" tab
         async function addNewWorkoutFromTodayTab() {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể thêm bài tập.", "error");
+                return;
+            }
+
             const nameInput = document.getElementById('new-workout-name-today');
             const setsInput = document.getElementById('new-workout-sets-today');
             const imageUrlInput = document.getElementById('new-workout-image-url-today');
 
             const name = nameInput.value.trim();
             const sets = setsInput.value.trim();
-            const image_url = imageUrlInput.value.trim(); // Đã thay đổi thành image_url
+            const image_url = imageUrlInput.value.trim(); // Changed to image_url
 
             if (!name || !sets) {
                 showMessage("Tên bài tập và Sets không được để trống!", "error");
                 return;
             }
 
-            // Thêm vào các bài tập chính nếu chưa tồn tại
+            // Add to master workouts if it doesn't exist
             let masterWorkoutId;
             const existingMasterWorkout = allWorkouts.find(w => w.name === name && w.sets === sets);
 
@@ -901,12 +939,12 @@
                 const newMasterWorkoutPayload = {
                     name: name,
                     sets: sets,
-                    image_url: image_url // Đã thay đổi thành image_url
+                    image_url: image_url // Changed to image_url
                 };
                 const { data, error } = await supabaseClient
                     .from('all_workouts')
                     .insert(newMasterWorkoutPayload)
-                    .select(); // Chọn để lấy ID mới được tạo
+                    .select(); // Select to get the newly created ID
 
                 if (error) {
                     console.error("Lỗi khi thêm bài tập chính mới:", error);
@@ -914,16 +952,16 @@
                     return;
                 }
                 masterWorkoutId = data[0].id;
-                allWorkouts.push(data[0]); // Thêm vào trạng thái cục bộ
+                allWorkouts.push(data[0]); // Add to local state
             }
 
-            // Thêm vào bài tập hàng ngày
+            // Add to daily workouts
             const dailyWorkoutPayload = {
                 master_id: masterWorkoutId,
                 user_id: userId,
                 name: name,
                 sets: sets,
-                image_url: image_url, // Đã thay đổi thành image_url
+                image_url: image_url, // Changed to image_url
                 completed: false,
                 workout_date: getTodayDateString()
             };
@@ -939,7 +977,7 @@
                 return;
             }
 
-            workouts.push(newDailyWorkoutData[0]); // Thêm vào trạng thái cục bộ
+            workouts.push(newDailyWorkoutData[0]); // Add to local state
             totalWorkouts++;
             updateCurrentDayWeeklyStat();
             showMessage("Đã thêm bài tập vào hôm nay!", "success");
@@ -951,31 +989,37 @@
             renderApp();
         }
 
-        // Hàm để thêm bài tập mới từ tab "Bài tập của tôi"
+        // Function to add new workout from "My Workouts" tab
         async function addNewWorkoutFromMyWorkoutsTab() {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể thêm bài tập.", "error");
+                return;
+            }
+
             const nameInput = document.getElementById('new-workout-name-my-workouts');
             const setsInput = document.getElementById('new-workout-sets-my-workouts');
             const imageUrlInput = document.getElementById('new-workout-image-url-my-workouts');
 
             const name = nameInput.value.trim();
             const sets = setsInput.value.trim();
-            const image_url = imageUrlInput.value.trim(); // Đã thay đổi thành image_url
+            const image_url = imageUrlInput.value.trim(); // Changed to image_url
 
             if (!name || !sets) {
                 showMessage("Tên bài tập và Sets không được để trống!", "error");
                 return;
             }
 
-            // Kiểm tra trùng lặp trước khi thêm vào allWorkouts
+            // Check for duplicates before adding to allWorkouts
             if (allWorkouts.some(w => w.name === name && w.sets === sets)) {
-                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); // Đã thay đổi thành info, không phải error
+                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); // Changed to info, not error
                 return;
             }
 
             const newMasterWorkoutPayload = {
                 name: name,
                 sets: sets,
-                image_url: image_url // Đã thay đổi thành image_url
+                image_url: image_url // Changed to image_url
             };
 
             const { data, error } = await supabaseClient
@@ -989,7 +1033,7 @@
                 return;
             }
 
-            allWorkouts.push(data[0]); // Thêm vào trạng thái cục bộ
+            allWorkouts.push(data[0]); // Add to local state
             showMessage("Đã thêm bài tập vào danh sách chính!", "success");
 
             nameInput.value = '';
@@ -999,18 +1043,24 @@
             renderApp();
         }
 
-        // Hàm để thêm một bài tập từ danh sách chính vào danh sách hôm nay
+        // Function to add a workout from the master list to today's list
         async function addSelectedWorkoutToToday(masterWorkoutId) {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể thêm bài tập.", "error");
+                return;
+            }
+
             const workoutToAdd = allWorkouts.find(w => w.id === masterWorkoutId);
             if (workoutToAdd) {
-                // Kiểm tra xem bài tập này đã có trong danh sách hôm nay chưa (dựa vào masterId)
+                // Check if this workout is already in today's list (based on masterId)
                 if (!workouts.some(w => w.master_id === masterWorkoutId && w.workout_date === getTodayDateString())) {
                     const dailyWorkoutPayload = {
                         master_id: masterWorkoutId,
                         user_id: userId,
                         name: workoutToAdd.name,
                         sets: workoutToAdd.sets,
-                        image_url: workoutToAdd.image_url, // Đã thay đổi thành image_url
+                        image_url: workoutToAdd.image_url, // Changed to image_url
                         completed: false,
                         workout_date: getTodayDateString()
                     };
@@ -1026,7 +1076,7 @@
                         return;
                     }
 
-                    workouts.push(data[0]); // Thêm vào trạng thái cục bộ
+                    workouts.push(data[0]); // Add to local state
                     totalWorkouts++;
                     updateCurrentDayWeeklyStat();
                     showMessage("Đã thêm bài tập vào danh sách hôm nay!", "success");
@@ -1038,11 +1088,17 @@
         }
 
         async function removeWorkout(id) {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể xóa bài tập.", "error");
+                return;
+            }
+
             const { error } = await supabaseClient
                 .from('daily_workouts')
                 .delete()
                 .eq('id', id)
-                .eq('user_id', userId); // Đảm bảo user_id cho RLS
+                .eq('user_id', userId); // Ensure user_id for RLS
 
             if (error) {
                 console.error("Lỗi khi xóa bài tập hàng ngày:", error);
@@ -1055,19 +1111,25 @@
             }
         }
 
-        // Hàm để xóa bài tập khỏi danh sách chính
+        // Function to remove workout from master list
         async function removeMasterWorkout(id) {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể xóa bài tập.", "error");
+                return;
+            }
+
             const { error } = await supabaseClient
                 .from('all_workouts')
                 .delete()
-                .eq('id', id); // Lưu ý: RLS cho all_workouts có thể cho phép nhiều hơn nếu đó là danh sách được chia sẻ
+                .eq('id', id); // Note: RLS for all_workouts might allow more if it's a shared list
 
             if (error) {
                 console.error("Lỗi khi xóa bài tập chính:", error);
                 showMessage("Lỗi khi xóa bài tập khỏi danh sách chính.", "error");
             } else {
                 allWorkouts = allWorkouts.filter(workout => workout.id !== id);
-                // Cũng xóa khỏi bài tập hàng ngày nếu nó dựa trên bài tập chính này
+                // Also remove from daily workouts if it was based on this master workout
                 workouts = workouts.filter(workout => workout.master_id !== id);
                 updateCurrentDayWeeklyStat();
                 showMessage("Bài tập đã được xóa khỏi danh sách chính.", "success");
@@ -1075,42 +1137,99 @@
             }
         }
 
-        // Hàm xác thực
+        // Authentication functions
         async function handleSignUp() {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể đăng ký.", "error");
+                return;
+            }
+
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
-            if (error) {
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    throw error;
+                } else {
+                    showMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.", "success");
+                    console.log("Đăng ký thành công:", data);
+                }
+            } catch (error) {
                 showMessage(`Đăng ký thất bại: ${error.message}`, "error");
                 console.error("Lỗi đăng ký:", error);
-            } else {
-                showMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.", "success");
-                console.log("Đăng ký thành công:", data);
+                document.getElementById('loading-overlay').style.display = 'none'; // Ensure loading is hidden on error
             }
         }
 
         async function handleSignIn() {
+            // Check network connection
+            if (!navigator.onLine) {
+                showMessage("Mất kết nối mạng! Không thể đăng nhập.", "error");
+                return;
+            }
+
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    throw error;
+                } else {
+                    showMessage("Đăng nhập thành công!", "success");
+                    console.log("Đăng nhập thành công:", data);
+                    // Supabase's onAuthStateChange will handle showing the app
+                }
+            } catch (error) {
+                // Ensure loading is hidden on authentication failure
+                document.getElementById('loading-overlay').style.display = 'none';
                 showMessage(`Đăng nhập thất bại: ${error.message}`, "error");
                 console.error("Lỗi đăng nhập:", error);
-            } else {
-                showMessage("Đăng nhập thành công!", "success");
-                console.log("Đăng nhập thành công:", data);
-                // onAuthStateChange của Supabase sẽ xử lý việc hiển thị ứng dụng
             }
         }
 
-        // Trình lắng nghe sự kiện và tải ban đầu
+        // Event listeners and initial load
         document.addEventListener('DOMContentLoaded', async () => {
             updateLiveDateTime();
             setInterval(updateLiveDateTime, 1000);
 
-            // Xử lý các thay đổi trạng thái xác thực
+            // Handle authentication state changes
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (session && session.user) {
+                try { // Added error boundary for auth event
+                    if (session && session.user) {
+                        userId = session.user.id;
+                        document.getElementById('auth-container').style.display = 'none';
+                        document.getElementById('app-container').style.display = 'block';
+                        await loadDataFromSupabase();
+                        initializeAppAndHandleDailyRollover();
+                        renderApp();
+                    } else {
+                        userId = null;
+                        document.getElementById('auth-container').style.display = 'flex';
+                        document.getElementById('app-container').style.display = 'none';
+                        isLoading = false; // Ensure loading overlay is hidden if not authenticated
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        lucide.createIcons(); // Display icons on auth page
+                    }
+                } catch (error) {
+                    console.error("Lỗi xử lý auth state:", error);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+            });
+
+            // Initial session check
+            try { // Added error boundary for initial session check
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error("Lỗi kiểm tra phiên:", error);
+                    document.getElementById('loading-overlay').style.display = 'none'; // Ensure loading is hidden on error
+                    // Even if there's an error, proceed to show auth container
+                    document.getElementById('auth-container').style.display = 'flex';
+                    document.getElementById('app-container').style.display = 'none';
+                    isLoading = false;
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    lucide.createIcons();
+                } else if (session) {
                     userId = session.user.id;
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('app-container').style.display = 'block';
@@ -1118,25 +1237,15 @@
                     initializeAppAndHandleDailyRollover();
                     renderApp();
                 } else {
-                    userId = null;
                     document.getElementById('auth-container').style.display = 'flex';
                     document.getElementById('app-container').style.display = 'none';
-                    isLoading = false; // Đảm bảo lớp phủ tải bị ẩn nếu chưa xác thực
+                    isLoading = false;
                     document.getElementById('loading-overlay').style.display = 'none';
-                    lucide.createIcons(); // Hiển thị biểu tượng trên trang xác thực
+                    lucide.createIcons();
                 }
-            });
-
-            // Kiểm tra phiên ban đầu
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                userId = session.user.id;
-                document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-                await loadDataFromSupabase();
-                initializeAppAndHandleDailyRollover();
-                renderApp();
-            } else {
+            } catch (error) {
+                console.error("Lỗi trong quá trình kiểm tra phiên ban đầu:", error);
+                document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('app-container').style.display = 'none';
                 isLoading = false;
@@ -1144,11 +1253,12 @@
                 lucide.createIcons();
             }
 
-            // Trình lắng nghe nút xác thực
+
+            // Authentication button listeners
             document.getElementById('signup-btn').addEventListener('click', handleSignUp);
             document.getElementById('signin-btn').addEventListener('click', handleSignIn);
 
-            // Trình lắng nghe tab ứng dụng
+            // App tab listeners
             document.getElementById('today-tab-btn').addEventListener('click', () => {
                 currentTab = 'today';
                 showAddWorkoutFormToday = false;
