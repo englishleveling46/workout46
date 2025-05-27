@@ -117,8 +117,7 @@
 
         // Cấu hình Supabase
         const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // URL dự án Supabase của bạn
-        // VUI LÒNG THAY THẾ 'YOUR_SUPABASE_ANON_KEY_HERE' BẰNG KHÓA ANON KEY THỰC TẾ CỦA BẠN TỪ BẢNG ĐIỀU KHIỂN SUPABASE
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvPZnloye8'; // Khóa ẩn danh Supabase của bạn
 
         // Khởi tạo client Supabase
         const { createClient } = supabase;
@@ -172,10 +171,15 @@
 
         // Hàm dữ liệu Supabase
         async function loadDataFromSupabase() {
-            // isLoading và hiển thị/ẩn overlay sẽ được quản lý bởi hàm gọi
+            isLoading = true;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            lucide.createIcons(); // Hiển thị biểu tượng tải
+
             if (!userId) {
                 console.warn("Người dùng chưa xác thực. Không thể tải dữ liệu từ Supabase.");
-                return; // Không ném lỗi, chỉ thoát
+                isLoading = false;
+                document.getElementById('loading-overlay').style.display = 'none';
+                return;
             }
 
             try {
@@ -204,9 +208,9 @@
                     .from('user_stats')
                     .select('*')
                     .eq('user_id', userId)
-                    .single();
+                    .single(); // Chỉ mong đợi một hàng cho mỗi người dùng
 
-                if (userStatsError && userStatsError.code !== 'PGRST116') {
+                if (userStatsError && userStatsError.code !== 'PGRST116') { // PGRST116 có nghĩa là không tìm thấy hàng nào (chưa có dữ liệu cho người dùng này)
                     throw userStatsError;
                 }
 
@@ -217,6 +221,7 @@
                     streakLastAchievedDate = userStatsData.streak_last_achieved_date;
                     console.log("Thống kê người dùng đã tải:", { streak, totalWorkouts, weeklyStats, streakLastAchievedDate });
                 } else {
+                    // Nếu không có thống kê người dùng, hãy khởi tạo chúng
                     const { error: insertError } = await supabaseClient.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
                     if (insertError) throw insertError;
                     console.log("Đã khởi tạo thống kê người dùng mới.");
@@ -227,13 +232,16 @@
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu từ Supabase:", error);
                 showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Ứng dụng sẽ khởi động với dữ liệu trống.`, "error");
+                // Quay lại trạng thái trống nếu tìm nạp thất bại
                 workouts = [];
                 allWorkouts = [];
                 streak = 0;
                 totalWorkouts = 0;
                 weeklyStats = [];
                 streakLastAchievedDate = null;
-                throw error; // Ném lỗi để hàm gọi có thể bắt
+            } finally {
+                isLoading = false;
+                document.getElementById('loading-overlay').style.display = 'none';
             }
         }
 
@@ -1100,64 +1108,41 @@
             updateLiveDateTime();
             setInterval(updateLiveDateTime, 1000);
 
-            // Hàm trợ giúp để xử lý tải dữ liệu và hiển thị/ẩn overlay
-            const handleInitialLoad = async (session) => {
-                isLoading = true;
-                document.getElementById('loading-overlay').style.display = 'flex';
-                lucide.createIcons(); // Hiển thị biểu tượng tải
-
+            // Xử lý các thay đổi trạng thái xác thực
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 if (session && session.user) {
                     userId = session.user.id;
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('app-container').style.display = 'block';
-                    try {
-                        // Thêm timeout cho việc tải dữ liệu
-                        const loadPromise = loadDataFromSupabase();
-                        const timeoutPromise = new Promise((resolve, reject) => {
-                            setTimeout(() => reject(new Error("Thời gian tải dữ liệu đã hết.")), 15000); // 15 giây
-                        });
-                        await Promise.race([loadPromise, timeoutPromise]);
-
-                        initializeAppAndHandleDailyRollover();
-                        renderApp();
-                    } catch (error) {
-                        console.error("Lỗi khi tải dữ liệu hoặc timeout:", error);
-                        showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Vui lòng thử lại.`, "error");
-                        // Hiển thị ứng dụng với dữ liệu trống nếu có lỗi tải
-                        document.getElementById('auth-container').style.display = 'none';
-                        document.getElementById('app-container').style.display = 'block';
-                        renderApp(); // Render với dữ liệu trống
-                    }
+                    await loadDataFromSupabase();
+                    initializeAppAndHandleDailyRollover();
+                    renderApp();
                 } else {
                     userId = null;
                     document.getElementById('auth-container').style.display = 'flex';
                     document.getElementById('app-container').style.display = 'none';
-                }
-
-                isLoading = false;
-                document.getElementById('loading-overlay').style.display = 'none';
-                lucide.createIcons(); // Đảm bảo các biểu tượng được tạo sau khi ẩn overlay
-            };
-
-            // Xử lý các thay đổi trạng thái xác thực
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-                    // Chỉ xử lý khi người dùng đăng nhập hoặc phiên ban đầu
-                    await handleInitialLoad(session);
-                } else if (event === 'SIGNED_OUT') {
-                    // Khi đăng xuất, hiển thị lại màn hình xác thực
-                    userId = null;
-                    document.getElementById('auth-container').style.display = 'flex';
-                    document.getElementById('app-container').style.display = 'none';
-                    isLoading = false;
+                    isLoading = false; // Đảm bảo lớp phủ tải bị ẩn nếu chưa xác thực
                     document.getElementById('loading-overlay').style.display = 'none';
-                    lucide.createIcons();
+                    lucide.createIcons(); // Hiển thị biểu tượng trên trang xác thực
                 }
             });
 
-            // Kiểm tra phiên ban đầu ngay lập tức
+            // Kiểm tra phiên ban đầu
             const { data: { session } } = await supabaseClient.auth.getSession();
-            await handleInitialLoad(session); // Gọi hàm xử lý tải ban đầu
+            if (session) {
+                userId = session.user.id;
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                await loadDataFromSupabase();
+                initializeAppAndHandleDailyRollover();
+                renderApp();
+            } else {
+                document.getElementById('auth-container').style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
+                isLoading = false;
+                document.getElementById('loading-overlay').style.display = 'none';
+                lucide.createIcons();
+            }
 
             // Trình lắng nghe nút xác thực
             document.getElementById('signup-btn').addEventListener('click', handleSignUp);
@@ -1182,7 +1167,7 @@
                 showAddWorkoutFormMyWorkouts = false;
                 renderApp();
             });
-            // lucide.createIcons() is already called in handleInitialLoad and renderApp
+            lucide.createIcons();
         });
 
         window.addEventListener('resize', () => {
