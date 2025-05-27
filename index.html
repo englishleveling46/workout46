@@ -119,8 +119,8 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlYWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Your Supabase anon key
 
         // Initialize Supabase client
-        // FIX: Changed Supabase.createClient to supabase.createClient
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let userId = null; // Current authenticated user ID
 
@@ -183,7 +183,7 @@
 
             try {
                 // Load daily workouts for today
-                const { data: dailyWorkoutsData, error: dailyWorkoutsError } = await supabase
+                const { data: dailyWorkoutsData, error: dailyWorkoutsError } = await supabaseClient
                     .from('daily_workouts')
                     .select('*')
                     .eq('user_id', userId)
@@ -194,7 +194,7 @@
                 console.log("Daily workouts loaded:", workouts);
 
                 // Load all master workouts
-                const { data: allWorkoutsData, error: allWorkoutsError } = await supabase
+                const { data: allWorkoutsData, error: allWorkoutsError } = await supabaseClient
                     .from('all_workouts')
                     .select('*');
 
@@ -203,7 +203,7 @@
                 console.log("All master workouts loaded:", allWorkouts);
 
                 // Load user stats
-                const { data: userStatsData, error: userStatsError } = await supabase
+                const { data: userStatsData, error: userStatsError } = await supabaseClient
                     .from('user_stats')
                     .select('*')
                     .eq('user_id', userId)
@@ -221,7 +221,7 @@
                     console.log("User stats loaded:", { streak, totalWorkouts, weeklyStats, streakLastAchievedDate });
                 } else {
                     // If no user stats exist, initialize them
-                    const { error: insertError } = await supabase.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
+                    const { error: insertError } = await supabaseClient.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
                     if (insertError) throw insertError;
                     console.log("Initialized new user stats.");
                 }
@@ -270,7 +270,7 @@
                     streak_last_achieved_date: streakLastAchievedDate
                 };
 
-                const { error: userStatsUpsertError } = await supabase
+                const { error: userStatsUpsertError } = await supabaseClient
                     .from('user_stats')
                     .upsert(userStatsToSave, { onConflict: 'user_id' }); // Conflict on 'user_id'
 
@@ -864,7 +864,7 @@
                 workouts[workoutIndex].completed = newCompletedStatus;
 
                 // Update in Supabase
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('daily_workouts')
                     .update({ completed: newCompletedStatus })
                     .eq('id', id)
@@ -909,7 +909,7 @@
                     sets: sets,
                     image_url: image_url // Changed to image_url
                 };
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('all_workouts')
                     .insert(newMasterWorkoutPayload)
                     .select(); // Select to get the newly generated ID
@@ -934,7 +934,7 @@
                 workout_date: getTodayDateString()
             };
 
-            const { data: newDailyWorkoutData, error: dailyWorkoutError } = await supabase
+            const { data: newDailyWorkoutData, error: dailyWorkoutError } = await supabaseClient
                 .from('daily_workouts')
                 .insert(dailyWorkoutPayload)
                 .select();
@@ -984,7 +984,7 @@
                 image_url: image_url // Changed to image_url
             };
 
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('all_workouts')
                 .insert(newMasterWorkoutPayload)
                 .select();
@@ -1021,7 +1021,7 @@
                         workout_date: getTodayDateString()
                     };
 
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('daily_workouts')
                         .insert(dailyWorkoutPayload)
                         .select();
@@ -1044,7 +1044,7 @@
         }
 
         async function removeWorkout(id) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('daily_workouts')
                 .delete()
                 .eq('id', id)
@@ -1063,7 +1063,7 @@
 
         // Hàm để xóa bài tập khỏi danh sách chính
         async function removeMasterWorkout(id) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('all_workouts')
                 .delete()
                 .eq('id', id); // Note: RLS for all_workouts might be more permissive if it's a shared list
@@ -1085,7 +1085,7 @@
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
             if (error) {
                 showMessage(`Đăng ký thất bại: ${error.message}`, "error");
                 console.error("Sign up error:", error);
@@ -1098,7 +1098,7 @@
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) {
                 showMessage(`Đăng nhập thất bại: ${error.message}`, "error");
                 console.error("Sign in error:", error);
@@ -1115,7 +1115,7 @@
             setInterval(updateLiveDateTime, 1000);
 
             // Handle authentication state changes
-            supabase.auth.onAuthStateChange(async (event, session) => {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 if (session && session.user) {
                     userId = session.user.id;
                     document.getElementById('auth-container').style.display = 'none';
@@ -1134,7 +1134,7 @@
             });
 
             // Initial check for session
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 userId = session.user.id;
                 document.getElementById('auth-container').style.display = 'none';
