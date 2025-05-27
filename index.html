@@ -67,6 +67,8 @@
         </div>
     </div>
 
+    <div id="message-area" class="fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform -translate-y-full opacity-0" style="min-width: 250px;"></div>
+
     <script>
         // Global state variables
         let workouts = []; 
@@ -102,6 +104,26 @@
         // Utility Functions
         function getTodayDateString() {
             return new Date().toISOString().split('T')[0];
+        }
+
+        // Function to display custom messages
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('message-area');
+            messageArea.textContent = message;
+            messageArea.className = `fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform opacity-100 ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
+            }`;
+            // Animate in
+            messageArea.style.transform = 'translateY(0)';
+            messageArea.style.opacity = '1';
+
+            setTimeout(() => {
+                // Animate out
+                messageArea.style.transform = 'translateY(-100%)';
+                messageArea.style.opacity = '0';
+            }, 3000); // Message disappears after 3 seconds
         }
 
         // Real-time Clock Function
@@ -197,7 +219,7 @@
 
                 } catch (error) {
                     console.error("Error fetching data from Google Sheet:", error);
-                    alert("Lỗi khi tải dữ liệu từ Google Sheet. Ứng dụng sẽ khởi động với dữ liệu trống.");
+                    showMessage("Lỗi khi tải dữ liệu từ Google Sheet. Ứng dụng sẽ khởi động với dữ liệu trống.", "error");
                     // Fallback to empty state if fetch fails
                     workouts = [];
                     allWorkouts = [];
@@ -800,9 +822,7 @@
             const imageUrl = imageUrlInput.value.trim();
 
             if (!name || !sets) {
-                // Using a simple alert for now, as per instructions to avoid confirm/alert
-                // In a real app, you'd use a custom modal for better UX
-                alert("Tên bài tập và Sets không được để trống!");
+                showMessage("Tên bài tập và Sets không được để trống!", "error");
                 return;
             }
 
@@ -851,13 +871,13 @@
             const imageUrl = imageUrlInput.value.trim();
 
             if (!name || !sets) {
-                alert("Tên bài tập và Sets không được để trống!");
+                showMessage("Tên bài tập và Sets không được để trống!", "error");
                 return;
             }
 
             // Kiểm tra trùng lặp trước khi thêm vào allWorkouts
             if (allWorkouts.some(w => w.name === name && w.sets === sets)) {
-                alert("Bài tập này đã tồn tại trong danh sách chính!");
+                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "error");
                 return;
             }
 
@@ -896,10 +916,10 @@
                     totalWorkouts++; 
                     updateCurrentDayWeeklyStat();
                     saveToLocalStorage();
-                    alert("Đã thêm bài tập vào danh sách hôm nay!");
+                    showMessage("Đã thêm bài tập vào danh sách hôm nay!", "success");
                     renderApp(); 
                 } else {
-                    alert("Bài tập này đã có trong danh sách hôm nay!");
+                    showMessage("Bài tập này đã có trong danh sách hôm nay!", "info");
                 }
             }
         }
@@ -913,21 +933,17 @@
 
         // Hàm để xóa bài tập khỏi danh sách chính
         function removeMasterWorkout(id) {
-            // Using a simple alert for now, as per instructions to avoid confirm/alert
-            // In a real app, you'd use a custom modal for better UX
-            if (true) { // Always proceed with deletion, as confirm() is not allowed
-                allWorkouts = allWorkouts.filter(workout => workout.id !== id);
-                saveToLocalStorage();
-                renderApp();
-                alert("Bài tập đã được xóa khỏi danh sách chính.");
-            }
+            allWorkouts = allWorkouts.filter(workout => workout.id !== id);
+            saveToLocalStorage();
+            renderApp();
+            showMessage("Bài tập đã được xóa khỏi danh sách chính.", "success");
         }
 
         // Function to send data to Google Apps Script
         async function sendDataToGoogleSheet() {
             if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !GOOGLE_APPS_SCRIPT_URL) {
                 console.error("Vui lòng cập nhật GOOGLE_APPS_SCRIPT_URL với URL triển khai của bạn.");
-                alert("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
+                showMessage("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.", "error");
                 return;
             }
 
@@ -951,9 +967,9 @@
                 console.log("Đang gửi dữ liệu đến Google Sheet (doPost)...");
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'cors', // Changed from 'no-cors' to 'cors'
+                    mode: 'cors', 
                     headers: {
-                        'Content-Type': 'application/json', // Changed from 'text/plain;charset=utf-8' to 'application/json'
+                        'Content-Type': 'application/json', 
                     },
                     body: JSON.stringify(dataToSend)
                 });
@@ -963,11 +979,11 @@
                 }
                 const result = await response.json();
                 console.log("Kết quả từ server:", result);
-                alert("Dữ liệu đã được lưu thành công!"); // Inform user of success
+                showMessage("Dữ liệu đã được lưu thành công!", "success");
 
             } catch (error) {
                 console.error("Lỗi khi gửi dữ liệu đến Google Sheet:", error);
-                alert(`Lỗi khi lưu dữ liệu: ${error.message}. Vui lòng kiểm tra console để biết chi tiết.`);
+                showMessage(`Lỗi khi lưu dữ liệu: ${error.message}. Vui lòng kiểm tra console để biết chi tiết.`, "error");
             } finally {
                 const saveButton = document.getElementById('save-data-to-sheet-btn');
                 if (saveButton) {
