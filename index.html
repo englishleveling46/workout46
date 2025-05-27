@@ -119,7 +119,8 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlYWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Your Supabase anon key
 
         // Initialize Supabase client
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // FIX: Changed Supabase.createClient to supabase.createClient
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let userId = null; // Current authenticated user ID
 
