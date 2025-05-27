@@ -116,7 +116,7 @@
 
         // Cấu hình Supabase
         const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // URL dự án Supabase của bạn
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvPZnloye8'; // Khóa ẩn danh Supabase của bạn
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvZPnloye8'; // Khóa ẩn danh Supabase của bạn
 
         // Khởi tạo client Supabase
         const { createClient } = supabase;
@@ -538,64 +538,6 @@
             lucide.createIcons();
         }
 
-        function renderWorkoutItems() {
-            const workoutListContainer = document.getElementById('workout-list-container');
-            if (!workoutListContainer) return;
-            workoutListContainer.innerHTML = '';
-
-            if (workouts.length === 0) {
-                workoutListContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào. Thêm bài tập mới hoặc chọn từ "Bài tập của tôi".</p>';
-                return;
-            }
-
-            workouts.forEach(workout => {
-                const workoutItem = document.createElement('div');
-                workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
-                    workout.completed
-                        ? 'bg-green-500/10 border-green-500/30'
-                        : 'bg-gray-800/50 border-gray-700'
-                }`;
-                workoutItem.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
-                        <button class="toggle-workout-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${workout.id}">
-                            ${workout.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
-                        </button>
-
-                        ${workout.image_url ? `
-                            <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
-                        ` : `
-                            <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
-                                <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
-                            </div>
-                        `}
-
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-medium text-sm ${
-                                    workout.completed ? 'text-green-400 line-through' : 'text-white'
-                                } truncate">
-                                    ${workout.name}
-                                </h3>
-                            </div>
-                            <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
-                        </div>
-                    </div>
-                    <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.id}">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                `;
-                workoutListContainer.appendChild(workoutItem);
-            });
-
-            document.querySelectorAll('.toggle-workout-btn').forEach(button => {
-                button.onclick = (event) => toggleWorkout(event.currentTarget.dataset.id);
-            });
-            document.querySelectorAll('.remove-workout-btn').forEach(button => {
-                button.onclick = (event) => removeWorkout(event.currentTarget.dataset.id);
-            });
-            lucide.createIcons();
-        }
-
         function renderMyWorkoutsTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
@@ -646,58 +588,6 @@
                 document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
             }
             renderAllWorkoutItems();
-            lucide.createIcons();
-        }
-
-        function renderAllWorkoutItems() {
-            const allWorkoutsListContainer = document.getElementById('all-workouts-list-container');
-            if (!allWorkoutsListContainer) return;
-            allWorkoutsListContainer.innerHTML = '';
-
-            if (allWorkouts.length === 0) {
-                allWorkoutsListContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào trong danh sách chính. Thêm bài tập mới!</p>';
-                return;
-            }
-
-            allWorkouts.forEach(workout => {
-                const workoutItem = document.createElement('div');
-                workoutItem.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
-                workoutItem.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
-                        ${workout.image_url ? `
-                            <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
-                        ` : `
-                            <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
-                                <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
-                            </div>
-                        `}
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-medium text-sm text-white truncate">
-                                    ${workout.name}
-                                </h3>
-                            </div>
-                            <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 ml-2 flex-shrink-0">
-                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg text-xs transition-colors" data-id="${workout.id}">
-                            Thêm vào hôm nay
-                        </button>
-                        <button class="remove-master-workout-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${workout.id}">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                `;
-                allWorkoutsListContainer.appendChild(workoutItem);
-            });
-
-            document.querySelectorAll('.add-to-today-btn').forEach(button => {
-                button.onclick = (event) => addSelectedWorkoutToToday(event.currentTarget.dataset.id);
-            });
-            document.querySelectorAll('.remove-master-workout-btn').forEach(button => {
-                button.onclick = (event) => removeMasterWorkout(event.currentTarget.dataset.id);
-            });
             lucide.createIcons();
         }
 
@@ -1159,19 +1049,19 @@
                 currentTab = 'today';
                 showAddWorkoutFormToday = false;
                 showAddWorkoutFormMyWorkouts = false;
-                renderApp();
+                renderApp(); // Thêm dòng này
             });
             document.getElementById('my-workouts-tab-btn').addEventListener('click', () => {
                 currentTab = 'my-workouts';
                 showAddWorkoutFormToday = false;
                 showAddWorkoutFormMyWorkouts = false;
-                renderApp();
+                renderApp(); // Thêm dòng này
             });
             document.getElementById('stats-tab-btn').addEventListener('click', () => {
                 currentTab = 'stats';
                 showAddWorkoutFormToday = false;
                 showAddWorkoutFormMyWorkouts = false;
-                renderApp();
+                renderApp(); // Thêm dòng này
             });
             lucide.createIcons();
         });
