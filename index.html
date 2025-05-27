@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fitness Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -116,7 +116,7 @@
 
         // Supabase Configuration
         const SUPABASE_URL = 'https://lgpiipvblvmrswzseead.supabase.co'; // Your Supabase project URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlZWFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Your Supabase anon key
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlYWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Your Supabase anon key
 
         // Initialize Supabase client
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
