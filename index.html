@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for Lucide icons to ensure they are rendered */
+        [data-lucide] {
+            display: inline-block;
+        }
+        /* Style for the live clock to ensure proper alignment if needed */
+        #current-date {
+            line-height: 1.4; /* Adjust line height for two lines of text */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white font-inter">
+
+    <div id="app-container">
+        <div class="bg-black/20 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+            <div class="px-4 py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
+                            <i data-lucide="flame" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                Fitness Tracker
+                            </h1>
+                            <p class="text-xs text-gray-400">Theo dõi tập luyện hàng ngày</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div id="current-date" class="text-lg font-bold"></div>
+                        <div class="text-xs text-gray-400">Thời gian hiện tại</div>
+                    </div>
+                </div>
+
+                <div class="flex bg-gray-800/50 rounded-xl p-1">
+                    <button id="today-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Hôm nay
+                    </button>
+                    <button id="my-workouts-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Bài tập của tôi
+                    </button>
+                    <button id="stats-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Thống kê
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-content" class="px-4 py-4 pb-20">
+            </div>
+    </div>
+
+    <script>
+        // --- Global state variables ---
+        let workouts = []; // Bài tập cho ngày hiện tại (checklist)
+        let allWorkouts = []; // Danh sách chính của tất cả các bài tập có sẵn (thư viện)
+        let streak = 0;
+        let totalWorkouts = 0; // Tổng số bài tập đã thêm từ trước đến nay
+        let weeklyStats = []; // Lưu trữ tóm tắt hàng ngày { date: 'YYYY-MM-DD', total: X, completed: Y, exercises: [...] }
+        let currentTab = 'today'; // 'today', 'my-workouts', 'stats'
+        let showAddWorkoutFormToday = false; // Điều khiển hiển thị của form "Thêm bài tập mới" trên tab "Hôm nay"
+        let showAddWorkoutFormMyWorkouts = false; // Điều khiển hiển thị của form "Thêm bài tập mới" trên tab "Bài tập của tôi"
+
+        let currentDayString = new Date().toISOString().split('T')[0];
+        let streakLastAchievedDate = null; 
+
+        const MAX_WEEKLY_STATS_DAYS = 30; 
+
+        // Removed categoryColors and categories arrays
+
+        // URL của Google Apps Script Web App của bạn
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4DAxmpTfaRWOn9V8Pb6tHEXIT56w2byLw0vd5h68F_jCbmyrXxwIfn7Wg6UC-tWSo/exec';
+
+        // Biến và hàm debounce để giới hạn tần suất gửi dữ liệu đến Google Sheet
+        let sendDataTimeout = null;
+        const DEBOUNCE_DELAY = 1500; // Gửi dữ liệu sau 1.5 giây kể từ lần thay đổi cuối cùng
+
+        function debounceSendDataToGoogleSheet() {
+            clearTimeout(sendDataTimeout);
+            sendDataTimeout = setTimeout(() => {
+                sendDataToGoogleSheet();
+            }, DEBOUNCE_DELAY);
+        }
+
+        // --- Utility Functions ---
+        function getTodayDateString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // --- Real-time Clock Function ---
+        function updateLiveDateTime() {
+            const currentDateElement = document.getElementById('current-date');
+            if (currentDateElement) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('vi-VN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false 
+                });
+                const dateString = now.toLocaleDateString('vi-VN', { 
+                    weekday: 'short', 
+                    day: '2-digit',   
+                    month: '2-digit'  
+                });
+                currentDateElement.innerHTML = `<span class="text-base">${timeString}</span><br>${dateString}`;
+            }
+        }
+
+        // --- LocalStorage Functions ---
+        function loadFromLocalStorage() {
+            try {
+                const storedWorkouts = localStorage.getItem('workouts');
+                if (storedWorkouts) workouts = JSON.parse(storedWorkouts);
+
+                const storedAllWorkouts = localStorage.getItem('allWorkouts');
+                if (storedAllWorkouts) allWorkouts = JSON.parse(storedAllWorkouts);
+
+                const storedStreak = localStorage.getItem('streak');
+                if (storedStreak) streak = parseInt(storedStreak, 10);
+
+                const storedTotalWorkouts = localStorage.getItem('totalWorkouts');
+                if (storedTotalWorkouts) totalWorkouts = parseInt(storedTotalWorkouts, 10);
+
+                const storedWeeklyStats = localStorage.getItem('weeklyStats');
+                if (storedWeeklyStats) weeklyStats = JSON.parse(storedWeeklyStats);
+
+                const storedCurrentDayString = localStorage.getItem('currentDayString');
+                if (storedCurrentDayString) currentDayString = storedCurrentDayString;
+                else currentDayString = getTodayDateString(); 
+
+                const storedStreakLastAchievedDate = localStorage.getItem('streakLastAchievedDate');
+                if (storedStreakLastAchievedDate) streakLastAchievedDate = storedStreakLastAchievedDate;
+
+            } catch (error) {
+                console.error("Error loading data from localStorage:", error);
+                workouts = [];
+                allWorkouts = [];
+                streak = 0;
+                totalWorkouts = 0;
+                weeklyStats = [];
+                currentDayString = getTodayDateString();
+                streakLastAchievedDate = null;
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            localStorage.setItem('allWorkouts', JSON.stringify(allWorkouts));
+            localStorage.setItem('streak', streak.toString());
+            localStorage.setItem('totalWorkouts', totalWorkouts.toString());
+            localStorage.setItem('weeklyStats', JSON.stringify(weeklyStats));
+            localStorage.setItem('currentDayString', currentDayString);
+            if (streakLastAchievedDate) {
+                localStorage.setItem('streakLastAchievedDate', streakLastAchievedDate);
+            } else {
+                localStorage.removeItem('streakLastAchievedDate');
+            }
+            
+            // Tự động gửi dữ liệu lên Google Sheet sau khi lưu vào localStorage
+            debounceSendDataToGoogleSheet();
+        }
+
+        // --- Daily Rollover and Stats Update Logic ---
+        function initializeAppAndHandleDailyRollover() {
+            const todayStr = getTodayDateString();
+
+            if (currentDayString !== todayStr) { 
+                const pastDayActualCompletions = workouts.filter(w => w.completed).length;
+                const pastDayTotalTasks = workouts.length;
+                const lastDayStats = {
+                    date: currentDayString, 
+                    total: pastDayTotalTasks,
+                    completed: pastDayActualCompletions,
+                    exercises: workouts.map(w => w.name) 
+                };
+                const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+                if (existingStatIndex > -1) {
+                    weeklyStats[existingStatIndex] = lastDayStats;
+                } else {
+                    weeklyStats.push(lastDayStats);
+                }
+                weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
+                    weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
+                }
+
+                if (pastDayTotalTasks > 0 && pastDayActualCompletions === pastDayTotalTasks) { 
+                    if (streakLastAchievedDate) {
+                        const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0];
+                        if (streakLastAchievedDate === expectedPrevStreakDate) {
+                            streak++; 
+                        } else {
+                            streak = 1; 
+                        }
+                    } else {
+                        streak = 1; 
+                    }
+                    streakLastAchievedDate = currentDayString; 
+                } else { 
+                    const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
+                    if (currentDayString === yesterdayStr) { 
+                        streak = 0;
+                        streakLastAchievedDate = null;
+                    }
+                }
+                workouts = []; // Reset daily workouts for the new day
+                currentDayString = todayStr; 
+            }
+            updateCurrentDayWeeklyStat(); 
+        }
+
+        function updateCurrentDayWeeklyStat() {
+            if (!currentDayString) return; 
+
+            const todayActualCompletions = workouts.filter(w => w.completed).length;
+            const todayTotalTasks = workouts.length;
+            const todayStatPayload = {
+                date: currentDayString,
+                total: todayTotalTasks,
+                completed: todayActualCompletions,
+                exercises: workouts.map(w => w.name)
+            };
+            const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+            if (existingStatIndex > -1) {
+                weeklyStats[existingStatIndex] = todayStatPayload;
+            } else {
+                weeklyStats.push(todayStatPayload);
+            }
+            weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
+                weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
+            }
+            saveToLocalStorage(); 
+        }
+
+        // --- Helper Functions (for UI rendering) ---
+        function getCompletedCount() {
+            return workouts.filter(w => w.completed).length;
+        }
+
+        function getCompletionRate() {
+            const completed = getCompletedCount();
+            return workouts.length > 0 ? Math.round((completed / workouts.length) * 100) : 0;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            const localDate = new Date(date.getTime() + userTimezoneOffset);
+            return localDate.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                weekday: 'short'
+            });
+        }
+        
+        function getWeeklyAverage() { 
+            if (weeklyStats.length === 0) return 0;
+            const relevantStats = weeklyStats.slice(0, 7);
+            const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
+            const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
+            return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+        }
+
+        function getMostActiveDay() { 
+            if (weeklyStats.length === 0) return 'Chưa có';
+            let maxCompleted = -1;
+            let mostActiveDayData = null;
+            for (const day of weeklyStats) {
+                if (day.completed > maxCompleted) {
+                    maxCompleted = day.completed;
+                    mostActiveDayData = day;
+                }
+            }
+            return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
+        }
+
+        function getCurrentWeekTotalCompleted() { 
+            const relevantStats = weeklyStats.slice(0, 7);
+            return relevantStats.reduce((sum, day) => sum + day.completed, 0);
+        }
+
+        // --- UI Rendering Functions ---
+        function renderHeader() {
+            const todayTabBtn = document.getElementById('today-tab-btn');
+            const myWorkoutsTabBtn = document.getElementById('my-workouts-tab-btn');
+            const statsTabBtn = document.getElementById('stats-tab-btn');
+
+            todayTabBtn.className = `flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                currentTab === 'today'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'text-gray-400 hover:text-white'
+            }`;
+            myWorkoutsTabBtn.className = `flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                currentTab === 'my-workouts'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'text-gray-400 hover:text-white'
+            }`;
+            statsTabBtn.className = `flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                currentTab === 'stats'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'text-gray-400 hover:text-white'
+            }`;
+        }
+
+        function renderTodayTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30">
+                        <div class="text-center">
+                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
+                            <p class="text-xl font-bold">${getCompletedCount()}</p>
+                            <p class="text-xs text-green-300">Hoàn thành</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30">
+                        <div class="text-center">
+                            <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
+                            <p class="text-xl font-bold">${streak}</p>
+                            <p class="text-xs text-orange-300">Ngày liên tiếp</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30">
+                        <div class="text-center">
+                            <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
+                            <p class="text-xl font-bold">${getCompletionRate()}%</p>
+                            <p class="text-xs text-blue-300">Tiến độ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Tiến độ hôm nay</h3>
+                        <span class="text-sm text-gray-400">${getCompletedCount()}/${workouts.length}</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
+                        <div
+                            class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
+                            style="width: ${getCompletionRate()}%"
+                        ></div>
+                    </div>
+                    <p class="text-xs text-gray-400 text-center">
+                        ${getCompletionRate() === 100 && workouts.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả bài tập!' : workouts.length > 0 ? `Còn ${workouts.length - getCompletedCount()} bài tập nữa` : 'Thêm bài tập cho hôm nay!'}
+                    </p>
+                </div>
+
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Bài tập hôm nay</h2>
+                            <div class="flex space-x-2">
+                                <button id="save-data-to-sheet-btn" class="flex items-center space-x-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    <span class="hidden sm:inline">Lưu dữ liệu</span>
+                                </button>
+                                <button id="add-workout-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span class="hidden sm:inline">Thêm</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="add-new-workout-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormToday ? 'block' : 'none'};">
+                        <div class="flex justify-end mb-3">
+                            <button id="close-add-form-today-btn" class="text-gray-400 hover:text-white">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="text" id="new-workout-sets-today" placeholder="Sets (VD: 3x15)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            </div>
+                        <div class="flex space-x-3 mt-3">
+                            <button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">
+                                Thêm vào hôm nay
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="workout-list-container" class="p-4 space-y-3">
+                        </div>
+                </div>
+            `;
+
+            document.getElementById('add-workout-today-btn').onclick = () => {
+                showAddWorkoutFormToday = true;
+                renderApp(); 
+            };
+            document.getElementById('save-data-to-sheet-btn').onclick = sendDataToGoogleSheet;
+
+            if (showAddWorkoutFormToday) {
+                document.getElementById('close-add-form-today-btn').onclick = () => {
+                    showAddWorkoutFormToday = false;
+                    renderApp();
+                };
+                document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
+            }
+            renderWorkoutItems();
+            lucide.createIcons(); 
+        }
+
+        function renderWorkoutItems() {
+            const workoutListContainer = document.getElementById('workout-list-container');
+            if (!workoutListContainer) return; 
+            workoutListContainer.innerHTML = ''; 
+
+            if (workouts.length === 0) {
+                workoutListContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào. Thêm bài tập mới hoặc chọn từ "Bài tập của tôi".</p>';
+                return;
+            }
+
+            workouts.forEach(workout => {
+                const workoutItem = document.createElement('div');
+                workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+                    workout.completed
+                        ? 'bg-green-500/10 border-green-500/30'
+                        : 'bg-gray-800/50 border-gray-700'
+                }`;
+                workoutItem.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1">
+                        <button class="toggle-workout-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${workout.id}">
+                            ${workout.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
+                        </button>
+
+                        ${workout.imageUrl ? `
+                            <img src="${workout.imageUrl}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
+                        ` : `
+                            <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
+                                <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
+                            </div>
+                        `}
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <h3 class="font-medium text-sm ${
+                                    workout.completed ? 'text-green-400 line-through' : 'text-white'
+                                } truncate">
+                                    ${workout.name}
+                                </h3>
+                                </div>
+                            <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
+                        </div>
+                    </div>
+                    <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.id}">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                `;
+                workoutListContainer.appendChild(workoutItem);
+            });
+
+            document.querySelectorAll('.toggle-workout-btn').forEach(button => {
+                button.onclick = (event) => toggleWorkout(event.currentTarget.dataset.id);
+            });
+            document.querySelectorAll('.remove-workout-btn').forEach(button => {
+                button.onclick = (event) => removeWorkout(event.currentTarget.dataset.id);
+            });
+            lucide.createIcons();
+        }
+
+        function renderMyWorkoutsTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Tất cả bài tập của tôi</h2>
+                            <button id="add-workout-my-workouts-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span class="hidden sm:inline">Thêm bài tập mới</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="add-new-workout-form-my-workouts" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormMyWorkouts ? 'block' : 'none'};">
+                        <div class="flex justify-end mb-3">
+                            <button id="close-add-form-my-workouts-btn" class="text-gray-400 hover:text-white">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="text" id="new-workout-sets-my-workouts" placeholder="Sets (VD: 3x15)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            </div>
+                        <div class="flex space-x-3 mt-3">
+                            <button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">
+                                Thêm vào danh sách chính
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="all-workouts-list-container" class="p-4 space-y-3">
+                        </div>
+                </div>
+            `;
+
+            document.getElementById('add-workout-my-workouts-btn').onclick = () => {
+                showAddWorkoutFormMyWorkouts = true;
+                renderApp();
+            };
+
+            if (showAddWorkoutFormMyWorkouts) {
+                document.getElementById('close-add-form-my-workouts-btn').onclick = () => {
+                    showAddWorkoutFormMyWorkouts = false;
+                    renderApp();
+                };
+                document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
+            }
+            renderAllWorkoutItems();
+            lucide.createIcons();
+        }
+
+        function renderAllWorkoutItems() {
+            const allWorkoutsListContainer = document.getElementById('all-workouts-list-container');
+            if (!allWorkoutsListContainer) return;
+            allWorkoutsListContainer.innerHTML = '';
+
+            if (allWorkouts.length === 0) {
+                allWorkoutsListContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào trong danh sách chính. Thêm bài tập mới!</p>';
+                return;
+            }
+
+            allWorkouts.forEach(workout => {
+                const workoutItem = document.createElement('div');
+                workoutItem.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
+                workoutItem.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1">
+                        ${workout.imageUrl ? `
+                            <img src="${workout.imageUrl}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
+                        ` : `
+                            <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
+                                <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
+                            </div>
+                        `}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <h3 class="font-medium text-sm text-white truncate">
+                                    ${workout.name}
+                                </h3>
+                                </div>
+                            <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 ml-2 flex-shrink-0">
+                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg text-xs transition-colors" data-id="${workout.id}">
+                            Thêm vào hôm nay
+                        </button>
+                        <button class="remove-master-workout-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${workout.id}">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                allWorkoutsListContainer.appendChild(workoutItem);
+            });
+
+            document.querySelectorAll('.add-to-today-btn').forEach(button => {
+                button.onclick = (event) => addSelectedWorkoutToToday(event.currentTarget.dataset.id);
+            });
+            document.querySelectorAll('.remove-master-workout-btn').forEach(button => {
+                button.onclick = (event) => removeMasterWorkout(event.currentTarget.dataset.id);
+            });
+            lucide.createIcons();
+        }
+
+
+        function renderStatsTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30">
+                            <div class="text-center">
+                                <i data-lucide="activity" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i>
+                                <p class="text-2xl font-bold">${getCurrentWeekTotalCompleted()}</p>
+                                <p class="text-xs text-purple-300">Bài tập (7 ngày)</p>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30">
+                            <div class="text-center">
+                                <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i>
+                                <p class="text-2xl font-bold">${getWeeklyAverage()}%</p>
+                                <p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-lg font-bold mb-4 flex items-center">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-purple-400"></i>
+                            Lịch sử hoạt động
+                        </h3>
+                        <div id="weekly-stats-container" class="space-y-3">
+                            </div>
+                    </div>
+
+                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-lg font-bold mb-4 flex items-center">
+                            <i data-lucide="trophy" class="w-5 h-5 mr-2 text-yellow-400"></i>
+                            Thành tích
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-orange-500/20 rounded-lg">
+                                        <i data-lucide="flame" class="w-5 h-5 text-orange-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Chuỗi ngày liên tiếp</p>
+                                        <p class="text-sm text-gray-400">Tập luyện đều đặn</p>
+                                    </div>
+                                </div>
+                                <span class="text-xl font-bold text-orange-400">${streak} ngày</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-green-500/20 rounded-lg">
+                                        <i data-lucide="calendar" class="w-5 h-5 text-green-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Ngày tích cực nhất</p>
+                                        <p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-bold text-green-400">${getMostActiveDay()}</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-blue-500/20 rounded-lg">
+                                        <i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Tổng bài tập</p>
+                                        <p class="text-sm text-gray-400">Từ khi bắt đầu</p>
+                                    </div>
+                                </div>
+                                <span class="text-xl font-bold text-blue-400">${totalWorkouts}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderWeeklyStatsHistory();
+            lucide.createIcons();
+        }
+
+        function renderWeeklyStatsHistory() {
+            const weeklyStatsContainer = document.getElementById('weekly-stats-container');
+            if (!weeklyStatsContainer) return;
+            weeklyStatsContainer.innerHTML = '';
+
+            if (weeklyStats.length === 0) {
+                weeklyStatsContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê.</p>';
+                return;
+            }
+            
+            weeklyStats.forEach(day => {
+                const percentage = day.total > 0 ? (day.completed / day.total) * 100 : 0;
+                const isToday = day.date === getTodayDateString(); 
+
+                const dayItem = document.createElement('div');
+                dayItem.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-gray-800/50'}`;
+                dayItem.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium">
+                                ${formatDate(day.date)}
+                                ${isToday && day.date === currentDayString ? '<span class="text-purple-400 ml-1">(Hôm nay)</span>' : ''}
+                            </span>
+                        </div>
+                        <span class="text-sm text-gray-400">
+                            ${day.completed}/${day.total}
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2 mb-1">
+                        <div
+                            class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-500"
+                            style="width: ${percentage}%"
+                        ></div>
+                    </div>
+                     ${day.exercises && day.exercises.length > 0 ? `
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${day.exercises.slice(0, 3).map(exerciseName => `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs whitespace-nowrap">${exerciseName}</span>`).join('')}
+                            ${day.exercises.length > 3 ? `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs">+${day.exercises.length - 3}</span>` : ''}
+                        </div>
+                    ` : '<p class="text-xs text-gray-500 italic mt-1">Không có bài tập được ghi lại.</p>'}
+                `;
+                weeklyStatsContainer.appendChild(dayItem);
+            });
+            lucide.createIcons();
+        }
+
+        // --- Core Application Render Function ---
+        function renderApp() {
+            renderHeader();
+            if (currentTab === 'today') {
+                renderTodayTab();
+            } else if (currentTab === 'my-workouts') {
+                renderMyWorkoutsTab();
+            } else {
+                renderStatsTab();
+            }
+            lucide.createIcons(); 
+        }
+
+        // --- Workout Management Functions (Logic) ---
+        function toggleWorkout(id) {
+            workouts = workouts.map(workout =>
+                workout.id === id ? { ...workout, completed: !workout.completed } : workout
+            );
+            updateCurrentDayWeeklyStat(); 
+            saveToLocalStorage();
+            renderApp();
+        }
+
+        // Hàm để thêm bài tập mới từ tab "Hôm nay"
+        function addNewWorkoutFromTodayTab() {
+            const nameInput = document.getElementById('new-workout-name-today');
+            const setsInput = document.getElementById('new-workout-sets-today');
+            const imageUrlInput = document.getElementById('new-workout-image-url-today');
+
+            const name = nameInput.value.trim();
+            const sets = setsInput.value.trim();
+            const imageUrl = imageUrlInput.value.trim();
+
+            if (!name || !sets) {
+                const errorMsgContainer = document.getElementById('add-new-workout-form-today').querySelector('.form-error-message');
+                if (errorMsgContainer) errorMsgContainer.remove();
+
+                const newErrorMsg = document.createElement('p');
+                newErrorMsg.textContent = "Tên bài tập và Sets không được để trống!";
+                newErrorMsg.className = "text-red-400 text-xs mt-2 form-error-message";
+                document.getElementById('add-new-workout-form-today').appendChild(newErrorMsg);
+                setTimeout(() => newErrorMsg.remove(), 3000);
+                return;
+            }
+
+            const newWorkoutId = Date.now().toString();
+            const newMasterWorkout = {
+                id: newWorkoutId,
+                name: name,
+                sets: sets,
+                imageUrl: imageUrl
+            };
+
+            // Kiểm tra và thêm vào allWorkouts nếu chưa có
+            if (!allWorkouts.some(w => w.name === name && w.sets === sets)) {
+                allWorkouts.push(newMasterWorkout);
+            }
+            
+            // Thêm vào workouts của ngày hôm nay
+            const dailyWorkout = {
+                id: newWorkoutId + '-' + Math.random().toString(36).substring(2, 9), // ID duy nhất cho daily workout
+                masterId: newWorkoutId, // Tham chiếu đến master workout
+                name: name,
+                sets: sets,
+                imageUrl: imageUrl,
+                completed: false
+            };
+            workouts.push(dailyWorkout);
+            totalWorkouts++; 
+            updateCurrentDayWeeklyStat();
+            saveToLocalStorage();
+
+            nameInput.value = '';
+            setsInput.value = '';
+            imageUrlInput.value = '';
+            showAddWorkoutFormToday = false; 
+            renderApp(); 
+        }
+
+        // Hàm để thêm bài tập mới từ tab "Bài tập của tôi"
+        function addNewWorkoutFromMyWorkoutsTab() {
+            const nameInput = document.getElementById('new-workout-name-my-workouts');
+            const setsInput = document.getElementById('new-workout-sets-my-workouts');
+            const imageUrlInput = document.getElementById('new-workout-image-url-my-workouts');
+
+            const name = nameInput.value.trim();
+            const sets = setsInput.value.trim();
+            const imageUrl = imageUrlInput.value.trim();
+
+            if (!name || !sets) {
+                const errorMsgContainer = document.getElementById('add-new-workout-form-my-workouts').querySelector('.form-error-message');
+                if (errorMsgContainer) errorMsgContainer.remove();
+
+                const newErrorMsg = document.createElement('p');
+                newErrorMsg.textContent = "Tên bài tập và Sets không được để trống!";
+                newErrorMsg.className = "text-red-400 text-xs mt-2 form-error-message";
+                document.getElementById('add-new-workout-form-my-workouts').appendChild(newErrorMsg);
+                setTimeout(() => newErrorMsg.remove(), 3000);
+                return;
+            }
+
+            // Kiểm tra trùng lặp trước khi thêm vào allWorkouts
+            if (allWorkouts.some(w => w.name === name && w.sets === sets)) {
+                alert("Bài tập này đã tồn tại trong danh sách chính!");
+                return;
+            }
+
+            const newMasterWorkout = {
+                id: Date.now().toString(),
+                name: name,
+                sets: sets,
+                imageUrl: imageUrl
+            };
+
+            allWorkouts.push(newMasterWorkout);
+            saveToLocalStorage();
+
+            nameInput.value = '';
+            setsInput.value = '';
+            imageUrlInput.value = '';
+            showAddWorkoutFormMyWorkouts = false; 
+            renderApp(); 
+        }
+
+        // Hàm để thêm một bài tập từ danh sách chính vào danh sách hôm nay
+        function addSelectedWorkoutToToday(masterWorkoutId) {
+            const workoutToAdd = allWorkouts.find(w => w.id === masterWorkoutId);
+            if (workoutToAdd) {
+                // Kiểm tra xem bài tập này đã có trong danh sách hôm nay chưa (dựa vào masterId)
+                if (!workouts.some(w => w.masterId === masterWorkoutId)) {
+                    const dailyWorkout = {
+                        id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9), // ID duy nhất cho daily workout
+                        masterId: masterWorkoutId, // Tham chiếu đến master workout
+                        name: workoutToAdd.name,
+                        sets: workoutToAdd.sets,
+                        imageUrl: workoutToAdd.imageUrl,
+                        completed: false
+                    };
+                    workouts.push(dailyWorkout);
+                    totalWorkouts++; 
+                    updateCurrentDayWeeklyStat();
+                    saveToLocalStorage();
+                    alert("Đã thêm bài tập vào danh sách hôm nay!");
+                    renderApp(); 
+                } else {
+                    alert("Bài tập này đã có trong danh sách hôm nay!");
+                }
+            }
+        }
+
+        function removeWorkout(id) {
+            workouts = workouts.filter(workout => workout.id !== id);
+            updateCurrentDayWeeklyStat(); 
+            saveToLocalStorage();
+            renderApp();
+        }
+
+        // Hàm để xóa bài tập khỏi danh sách chính
+        function removeMasterWorkout(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
+                allWorkouts = allWorkouts.filter(workout => workout.id !== id);
+                saveToLocalStorage();
+                renderApp();
+            }
+        }
+
+        // --- Function to send data to Google Apps Script ---
+        async function sendDataToGoogleSheet() {
+            if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !GOOGLE_APPS_SCRIPT_URL) {
+                console.error("Vui lòng cập nhật GOOGLE_APPS_SCRIPT_URL với URL triển khai của bạn.");
+                alert("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
+                return;
+            }
+
+            const dataToSend = {
+                workouts: workouts,
+                streak: streak,
+                totalWorkouts: totalWorkouts,
+                weeklyStats: weeklyStats,
+                allWorkouts: allWorkouts,
+                currentDayString: getTodayDateString() // Đảm bảo gửi currentDayString
+            };
+
+            try {
+                const saveButton = document.getElementById('save-data-to-sheet-btn');
+                if (saveButton) {
+                    saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Đang lưu...</span>';
+                    saveButton.disabled = true;
+                    lucide.createIcons();
+                }
+
+                console.log("Đang gửi dữ liệu đến Google Sheet...");
+                const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                console.log("Dữ liệu đã được gửi. Kiểm tra Google Sheet của bạn.");
+
+            } catch (error) {
+                console.error("Lỗi khi gửi dữ liệu đến Google Sheet:", error);
+                alert("Lỗi khi lưu dữ liệu. Vui lòng kiểm tra console để biết chi tiết.");
+            } finally {
+                const saveButton = document.getElementById('save-data-to-sheet-btn');
+                if (saveButton) {
+                    saveButton.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Lưu dữ liệu</span>';
+                    saveButton.disabled = false;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        // --- Event Listeners and Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage(); 
+            initializeAppAndHandleDailyRollover(); 
+            
+            updateLiveDateTime();
+            setInterval(updateLiveDateTime, 1000);
+
+            renderApp();
+
+            document.getElementById('today-tab-btn').addEventListener('click', () => {
+                currentTab = 'today';
+                showAddWorkoutFormToday = false;
+                showAddWorkoutFormMyWorkouts = false;
+                renderApp();
+            });
+            document.getElementById('my-workouts-tab-btn').addEventListener('click', () => {
+                currentTab = 'my-workouts';
+                showAddWorkoutFormToday = false;
+                showAddWorkoutFormMyWorkouts = false;
+                renderApp();
+            });
+            document.getElementById('stats-tab-btn').addEventListener('click', () => {
+                currentTab = 'stats';
+                showAddWorkoutFormToday = false;
+                showAddWorkoutFormMyWorkouts = false;
+                renderApp();
+            });
+            lucide.createIcons();
+        });
+
+        window.addEventListener('resize', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
