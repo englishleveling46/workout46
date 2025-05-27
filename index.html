@@ -115,8 +115,8 @@
         const MAX_WEEKLY_STATS_DAYS = 30;
 
         // Supabase Configuration
-        const SUPABASE_URL = 'https://lgpiipvblvmrswzseead.supabase.co'; // Replaced with your Supabase project URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlZWFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Replaced with your Supabase anon key
+        const SUPABASE_URL = 'https://lgpiipvblvmrswzseead.supabase.co'; // Your Supabase project URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncGlpcHZibHZtcnN3enNlZWFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNTQwNjIsImV4cCI6MjA2MzkzMDA2Mn0.4a-7y_159NOsQckzXm_6FZdKyQyUHucg8cmW7fn7yew'; // Your Supabase anon key
 
         // Initialize Supabase client
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -208,7 +208,7 @@
                     .eq('user_id', userId)
                     .single(); // Expecting only one row per user
 
-                if (userStatsError && userStatsError.code !== 'PGRST116') { // PGRST116 means no rows found
+                if (userStatsError && userStatsError.code !== 'PGRST116') { // PGRST116 means no rows found (no data for this user yet)
                     throw userStatsError;
                 }
 
@@ -220,7 +220,8 @@
                     console.log("User stats loaded:", { streak, totalWorkouts, weeklyStats, streakLastAchievedDate });
                 } else {
                     // If no user stats exist, initialize them
-                    await supabase.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
+                    const { error: insertError } = await supabase.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
+                    if (insertError) throw insertError;
                     console.log("Initialized new user stats.");
                 }
 
@@ -242,6 +243,8 @@
             }
         }
 
+        // This function is primarily for saving user stats and master workouts.
+        // Daily workout changes are handled by their specific functions (add, toggle, remove).
         async function saveDataToSupabase() {
             if (!userId) {
                 console.warn("User not authenticated. Cannot save data to Supabase.");
@@ -257,31 +260,6 @@
                     lucide.createIcons();
                 }
 
-                // Save daily workouts (upsert based on id and workout_date)
-                // Note: This assumes 'id' in daily_workouts is unique for each workout entry
-                // and 'workout_date' is also part of the unique constraint or handled correctly.
-                // For simplicity, we'll delete and re-insert for daily workouts, or use upsert if IDs are consistent.
-                // A better approach might be to track changes and only update/insert/delete changed items.
-                // For now, let's just upsert all daily workouts.
-                const dailyWorkoutsToSave = workouts.map(w => ({
-                    ...w,
-                    user_id: userId,
-                    workout_date: getTodayDateString()
-                }));
-
-                const { error: dailyWorkoutsUpsertError } = await supabase
-                    .from('daily_workouts')
-                    .upsert(dailyWorkoutsToSave, { onConflict: 'id' }); // Conflict on 'id' to update existing
-
-                if (dailyWorkoutsUpsertError) throw dailyWorkoutsUpsertError;
-
-                // Save all master workouts (upsert based on id)
-                const { error: allWorkoutsUpsertError } = await supabase
-                    .from('all_workouts')
-                    .upsert(allWorkouts, { onConflict: 'id' });
-
-                if (allWorkoutsUpsertError) throw allWorkoutsUpsertError;
-
                 // Save user stats
                 const userStatsToSave = {
                     user_id: userId,
@@ -296,7 +274,6 @@
                     .upsert(userStatsToSave, { onConflict: 'user_id' }); // Conflict on 'user_id'
 
                 if (userStatsUpsertError) throw userStatsUpsertError;
-
 
                 showMessage("Dữ liệu đã được lưu thành công vào Supabase!", "success");
 
@@ -387,7 +364,7 @@
             if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
                 weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
             }
-            saveDataToSupabase(); // Save to Supabase
+            saveDataToSupabase(); // Save to Supabase (primarily user stats)
         }
 
         // Helper Functions (for UI rendering)
@@ -912,7 +889,7 @@
 
             const name = nameInput.value.trim();
             const sets = setsInput.value.trim();
-            const imageUrl = imageUrlInput.value.trim();
+            const image_url = imageUrlInput.value.trim(); // Changed to image_url
 
             if (!name || !sets) {
                 showMessage("Tên bài tập và Sets không được để trống!", "error");
@@ -929,7 +906,7 @@
                 const newMasterWorkoutPayload = {
                     name: name,
                     sets: sets,
-                    image_url: imageUrl
+                    image_url: image_url // Changed to image_url
                 };
                 const { data, error } = await supabase
                     .from('all_workouts')
@@ -951,7 +928,7 @@
                 user_id: userId,
                 name: name,
                 sets: sets,
-                image_url: imageUrl,
+                image_url: image_url, // Changed to image_url
                 completed: false,
                 workout_date: getTodayDateString()
             };
@@ -987,7 +964,7 @@
 
             const name = nameInput.value.trim();
             const sets = setsInput.value.trim();
-            const imageUrl = imageUrlInput.value.trim();
+            const image_url = imageUrlInput.value.trim(); // Changed to image_url
 
             if (!name || !sets) {
                 showMessage("Tên bài tập và Sets không được để trống!", "error");
@@ -996,14 +973,14 @@
 
             // Kiểm tra trùng lặp trước khi thêm vào allWorkouts
             if (allWorkouts.some(w => w.name === name && w.sets === sets)) {
-                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "error");
+                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); // Changed to info, not error
                 return;
             }
 
             const newMasterWorkoutPayload = {
                 name: name,
                 sets: sets,
-                image_url: imageUrl
+                image_url: image_url // Changed to image_url
             };
 
             const { data, error } = await supabase
@@ -1038,7 +1015,7 @@
                         user_id: userId,
                         name: workoutToAdd.name,
                         sets: workoutToAdd.sets,
-                        image_url: workoutToAdd.image_url,
+                        image_url: workoutToAdd.image_url, // Changed to image_url
                         completed: false,
                         workout_date: getTodayDateString()
                     };
