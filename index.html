@@ -88,7 +88,7 @@
 
         // URL của Google Apps Script Web App của bạn
         // CẬP NHẬT URL NÀY SAU KHI TRIỂN KHAI LẠI APPS SCRIPT
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNt3aA4dIPUsikuqzWC0xbmel36Bi-3JASaw0u8xLW6iyra3UyHf_Mz1ViojiYZWI/exec';
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNt3aA4dIPUsikuqzWC0xbmel36Bi-3JASaw0u8xLW6iyra3UyHf_Mz1ViojiYZWI/exec'; // Placeholder URL
 
         // Biến và hàm debounce để giới hạn tần suất gửi dữ liệu đến Google Sheet
         let sendDataTimeout = null;
@@ -198,7 +198,8 @@
                 try {
                     const response = await fetch(GOOGLE_APPS_SCRIPT_URL + '?action=get', {
                         method: 'GET',
-                        mode: 'cors' // Use 'cors' for GET requests
+                        mode: 'cors', // Use 'cors' for GET requests
+                        credentials: 'omit' // Added credentials: 'omit'
                     });
                     const data = await response.json();
                     console.log("Data fetched from Google Sheet:", data);
@@ -968,6 +969,7 @@
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'cors', 
+                    credentials: 'omit', // Added credentials: 'omit'
                     headers: {
                         'Content-Type': 'application/json', 
                     },
