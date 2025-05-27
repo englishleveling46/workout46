@@ -80,7 +80,7 @@
         // Removed categoryColors and categories arrays
 
         // URL của Google Apps Script Web App của bạn
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4DAxmpTfaRWOn9V8Pb6tHEXIT56w2byLw0vd5h68F_jCbmyrXxwIfn7Wg6UC-tWSo/exec';
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNt3aA4dIPUsikuqzWC0xbmel36Bi-3JASaw0u8xLW6iyra3UyHf_Mz1ViojiYZWI/exec';
 
         // Biến và hàm debounce để giới hạn tần suất gửi dữ liệu đến Google Sheet
         let sendDataTimeout = null;
@@ -384,7 +384,7 @@
                             <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
                             <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
                             <input type="text" id="new-workout-sets-today" placeholder="Sets (VD: 3x15)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                            </div>
+                        </div>
                         <div class="flex space-x-3 mt-3">
                             <button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">
                                 Thêm vào hôm nay
@@ -452,7 +452,7 @@
                                 } truncate">
                                     ${workout.name}
                                 </h3>
-                                </div>
+                            </div>
                             <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
                         </div>
                     </div>
@@ -496,7 +496,7 @@
                             <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
                             <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
                             <input type="text" id="new-workout-sets-my-workouts" placeholder="Sets (VD: 3x15)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                            </div>
+                        </div>
                         <div class="flex space-x-3 mt-3">
                             <button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">
                                 Thêm vào danh sách chính
@@ -537,6 +537,7 @@
 
             allWorkouts.forEach(workout => {
                 const workoutItem = document.createElement('div');
+                // Removed opacity-0 group-hover:opacity-100 from the parent div to ensure the remove button is always visible
                 workoutItem.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 workoutItem.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1">
@@ -552,7 +553,7 @@
                                 <h3 class="font-medium text-sm text-white truncate">
                                     ${workout.name}
                                 </h3>
-                                </div>
+                            </div>
                             <p class="text-gray-400 text-xs mt-1">${workout.sets}</p>
                         </div>
                     </div>
@@ -872,19 +873,21 @@
 
         // --- Function to send data to Google Apps Script ---
         async function sendDataToGoogleSheet() {
+            // Kiểm tra URL Apps Script
             if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !GOOGLE_APPS_SCRIPT_URL) {
                 console.error("Vui lòng cập nhật GOOGLE_APPS_SCRIPT_URL với URL triển khai của bạn.");
                 alert("Lỗi: Vui lòng cấu hình URL Google Apps Script trong code.");
                 return;
             }
 
+            // Chuẩn bị dữ liệu để gửi
             const dataToSend = {
                 workouts: workouts,
                 streak: streak,
                 totalWorkouts: totalWorkouts,
                 weeklyStats: weeklyStats,
-                allWorkouts: allWorkouts,
-                currentDayString: getTodayDateString() // Đảm bảo gửi currentDayString
+                allWorkouts: allWorkouts, // Đảm bảo allWorkouts được gửi
+                currentDayString: getTodayDateString()
             };
 
             try {
@@ -898,9 +901,9 @@
                 console.log("Đang gửi dữ liệu đến Google Sheet...");
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'no-cors', // Sử dụng 'no-cors' để tránh vấn đề CORS
                     headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
+                        'Content-Type': 'text/plain;charset=utf-8', // Quan trọng cho 'no-cors'
                     },
                     body: JSON.stringify(dataToSend)
                 });
