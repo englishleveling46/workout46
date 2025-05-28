@@ -44,7 +44,7 @@
             border-radius: 1rem;
             padding: 1.5rem;
             width: 90%;
-            max-width: 500px; /* Adjusted for potentially wider content */
+            max-width: 500px; 
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -147,49 +147,51 @@
             </div>
 
             <div id="modal-sets-reps-editor" class="bg-gray-800/50 p-4 rounded-lg mb-4" style="display: none;">
-                <h4 class="text-md font-semibold mb-3 text-center">Chỉnh sửa Hôm nay</h4>
-                <div class="flex items-start justify-around space-x-1 sm:space-x-2 mb-3">
-                    <!-- Sets -->
-                    <div class="flex flex-col items-center flex-1">
-                        <label for="modal-sets-input" class="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Sets</label>
-                        <div class="flex items-center space-x-1 sm:space-x-2">
-                            <button id="sets-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="minus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                            <input type="number" id="modal-sets-input" class="w-10 sm:w-12 bg-gray-700 border border-gray-600 rounded-lg px-1 py-1 sm:py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <button id="sets-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="plus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Reps -->
-                    <div class="flex flex-col items-center flex-1">
-                        <label for="modal-reps-input" class="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Reps</label>
-                        <div class="flex items-center space-x-1 sm:space-x-2">
-                            <button id="reps-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="minus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                            <input type="number" id="modal-reps-input" class="w-10 sm:w-12 bg-gray-700 border border-gray-600 rounded-lg px-1 py-1 sm:py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <button id="reps-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="plus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Weight -->
-                    <div class="flex flex-col items-center flex-1">
-                        <label for="modal-weight-input" class="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tạ (kg)</label>
-                        <div class="flex items-center space-x-1 sm:space-x-2">
-                            <button id="weight-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="minus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                            <input type="number" id="modal-weight-input" class="w-10 sm:w-12 bg-gray-700 border border-gray-600 rounded-lg px-1 py-1 sm:py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                            <button id="weight-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-1.5 sm:p-2 rounded-md transition-colors">
-                                <i data-lucide="plus" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                            </button>
-                        </div>
+                <h4 class="text-md font-semibold mb-4 text-center">Chỉnh sửa Hôm nay</h4>
+                
+                <!-- Sets -->
+                <div class="mb-3">
+                    <label for="modal-sets-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Sets</label>
+                    <div class="flex items-center justify-center space-x-2">
+                        <button id="sets-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                        <input type="number" id="modal-sets-input" class="w-16 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                        <button id="sets-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </div>
-                <button id="save-workout-details-btn" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-semibold mt-2">
+
+                <!-- Reps -->
+                <div class="mb-3">
+                    <label for="modal-reps-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Reps</label>
+                    <div class="flex items-center justify-center space-x-2">
+                        <button id="reps-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                        <input type="number" id="modal-reps-input" class="w-16 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                        <button id="reps-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weight -->
+                <div class="mb-3">
+                    <label for="modal-weight-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Tạ (kg)</label>
+                    <div class="flex items-center justify-center space-x-2">
+                        <button id="weight-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                        <input type="number" id="modal-weight-input" class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                        <button id="weight-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="save-workout-details-btn" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-semibold mt-4">
                     Lưu thay đổi
                 </button>
             </div>
@@ -221,8 +223,8 @@
         const MODAL_WEIGHT_ADJUST_STEP = 2.5;
 
 
-        const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98';
-        const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA';
+        const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98'; // Replace with your App ID
+        const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA'; // Replace with your JS API Key
 
         Backendless.initApp(BACKENDLESS_APP_ID, BACKENDLESS_JS_API_KEY);
 
@@ -287,7 +289,9 @@
                 const dailyWorkoutsData = await Backendless.Data.of('DailyWorkouts').find(dailyWorkoutsQueryBuilder);
                 workouts = dailyWorkoutsData || [];
 
-                const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create(); // Assuming AllWorkouts are not owner-specific or managed differently. If owner-specific: .setWhereClause(`ownerId = '${userId}'`)
+                const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create(); 
+                // If AllWorkouts are user-specific, add: .setWhereClause(`ownerId = '${userId}'`) 
+                // For this example, assuming AllWorkouts are general, or you'll add ownerId when creating them if needed.
                 const allWorkoutsData = await Backendless.Data.of('AllWorkouts').find(allWorkoutsQueryBuilder);
                 allWorkouts = allWorkoutsData || [];
 
@@ -384,19 +388,15 @@
                     streakLastAchievedDate = currentDayString;
                 } else {
                     const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
-                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { // Only reset streak if there were tasks yesterday and not all were completed
+                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { 
                         streak = 0; 
                         streakLastAchievedDate = null; 
                     }
                 }
                 workouts = []; 
                 currentDayString = todayStr;
-                // After rollover, load today's workouts if any were pre-scheduled or carried over (not typical for this app structure but good practice)
-                // For this app, this means today's `workouts` array starts empty.
-                // LoadDataFromBackendless will fetch today's workouts again IF the app logic includes pre-populating future dates.
-                // In our case, it re-fetches today's empty list (or any workouts ALREADY for today in DB)
             }
-            updateCurrentDayWeeklyStat(); // This will also save UserStats
+            updateCurrentDayWeeklyStat(); 
         }
 
         function updateCurrentDayWeeklyStat() {
@@ -412,14 +412,14 @@
             else weeklyStats.push(todayStatPayload);
             weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
             if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
-            saveDataToBackendless(); // Saves all UserStats including streak, totalWorkouts, weeklyStats
+            saveDataToBackendless(); 
         }
 
         function getCompletedCount() { return workouts.filter(w => w.completed).length; }
         function getCompletionRate() { const c = getCompletedCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
         function formatDate(dateString) {
             const date = new Date(dateString); const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-            const localDate = new Date(date.getTime() + userTimezoneOffset); // Adjust to local date part before formatting
+            const localDate = new Date(date.getTime() + userTimezoneOffset); 
             return localDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', weekday: 'short' });
         }
         function getWeeklyAverage() {
@@ -497,7 +497,7 @@
                     <div id="workout-list-container" class="p-4 space-y-3"></div>
                 </div>`;
             document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderApp(); };
-            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; // This saves UserStats
+            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
             if (showAddWorkoutFormToday) {
                 document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderApp(); };
                 document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
@@ -514,7 +514,7 @@
             for (const workout of workouts) {
                 const workoutItem = document.createElement('div');
                 workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${workout.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
-                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Calculate volume here
+                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); 
                 const comparisonResult = await getPreviousWorkoutPerformance(workout.master_id, currentVolume);
                 let comparisonIcon = '', comparisonColor = 'text-gray-400';
                 if (comparisonResult === 'increased') { comparisonIcon = '<i data-lucide="arrow-up" class="w-4 h-4 text-green-400"></i>'; comparisonColor = 'text-green-400'; }
@@ -550,10 +550,11 @@
         }
 
         async function getPreviousWorkoutPerformance(masterId, currentVolume) {
+            if (!masterId) return 'no_data'; // No master_id, no history to compare
             const qb = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}' AND workout_date < '${getTodayDateString()}'`).setSortBy(['workout_date DESC']).setPageSize(1);
             const data = await Backendless.Data.of('DailyWorkouts').find(qb);
             if (data && data.length > 0) {
-                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); // Ensure volume is calculated correctly
+                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); 
                 if (currentVolume > prevVol) return 'increased'; if (currentVolume < prevVol) return 'decreased'; return 'same';
             } return 'no_data';
         }
@@ -616,10 +617,14 @@
                     const cv = parseInt(modalRepsInput.value); modalRepsInput.value = (isNaN(cv) ? 0 : cv) + 1;
                 });
                 rebindListeners('weight-decrement-btn', () => {
-                    const cv = parseFloat(modalWeightInput.value); modalWeightInput.value = (Math.max(0, (isNaN(cv) ? MODAL_WEIGHT_ADJUST_STEP : cv) - MODAL_WEIGHT_ADJUST_STEP)).toFixed(2);
+                    const cv = parseFloat(modalWeightInput.value); 
+                    let newVal = (isNaN(cv) ? MODAL_WEIGHT_ADJUST_STEP : cv) - MODAL_WEIGHT_ADJUST_STEP;
+                    modalWeightInput.value = Math.max(0, newVal).toFixed(2);
                 });
                 rebindListeners('weight-increment-btn', () => {
-                    const cv = parseFloat(modalWeightInput.value); modalWeightInput.value = ((isNaN(cv) ? -MODAL_WEIGHT_ADJUST_STEP : cv) + MODAL_WEIGHT_ADJUST_STEP).toFixed(2);
+                    const cv = parseFloat(modalWeightInput.value); 
+                    let newVal = (isNaN(cv) ? -MODAL_WEIGHT_ADJUST_STEP : cv) + MODAL_WEIGHT_ADJUST_STEP;
+                    modalWeightInput.value = newVal.toFixed(2);
                 });
                 rebindListeners('save-workout-details-btn', () => {
                     const newSets = parseInt(modalSetsInput.value); 
@@ -634,21 +639,24 @@
             } else { // Popup from "My Workouts" tab
                 modalSetsRepsEditor.style.display = 'none';
                 if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'block';
-
-                const queryBuilder = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`).setSortBy(['workout_date DESC']).setPageSize(5);
-                try {
-                    const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
-                    modalWorkoutHistory.innerHTML = ''; 
-                    if (historyData && historyData.length > 0) {
-                        historyData.forEach(entry => { 
-                            const item = document.createElement('div'); item.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
-                            item.innerHTML = `<span class="text-sm font-medium">${formatDate(entry.workout_date)}</span><span class="text-sm text-gray-300">${entry.num_sets}x${entry.num_reps} @ ${entry.weight_kg != null ? entry.weight_kg : '0'}kg</span>`;
-                            modalWorkoutHistory.appendChild(item);
-                        });
-                    } else { modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử.</p>'; }
-                } catch (error) {
-                    console.error("Lỗi tải lịch sử bài tập:", error);
-                    modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi tải lịch sử.</p>';
+                if (!masterId) {
+                     modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Không có master ID để tải lịch sử.</p>';
+                } else {
+                    const queryBuilder = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`).setSortBy(['workout_date DESC']).setPageSize(5);
+                    try {
+                        const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
+                        modalWorkoutHistory.innerHTML = ''; 
+                        if (historyData && historyData.length > 0) {
+                            historyData.forEach(entry => { 
+                                const item = document.createElement('div'); item.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
+                                item.innerHTML = `<span class="text-sm font-medium">${formatDate(entry.workout_date)}</span><span class="text-sm text-gray-300">${entry.num_sets}x${entry.num_reps} @ ${entry.weight_kg != null ? entry.weight_kg : '0'}kg</span>`;
+                                modalWorkoutHistory.appendChild(item);
+                            });
+                        } else { modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử.</p>'; }
+                    } catch (error) {
+                        console.error("Lỗi tải lịch sử bài tập:", error);
+                        modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi tải lịch sử.</p>';
+                    }
                 }
             }
             modal.classList.add('open');
@@ -660,15 +668,15 @@
         async function updateWorkoutDetails(objectId, newSets, newReps, newWeight) {
             const workoutIndex = workouts.findIndex(w => w.objectId === objectId);
             if (workoutIndex > -1) {
-                const updatedWorkout = { 
+                const updatedWorkoutData = { 
                     objectId: objectId, 
                     num_sets: newSets, 
                     num_reps: newReps, 
                     weight_kg: newWeight,
-                    volume: newSets * newReps // Volume still sets * reps for comparison consistency
+                    volume: newSets * newReps 
                 };
                 try {
-                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkout);
+                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData);
                     workouts[workoutIndex].num_sets = newSets; 
                     workouts[workoutIndex].num_reps = newReps; 
                     workouts[workoutIndex].weight_kg = newWeight;
@@ -715,7 +723,7 @@
         function renderAllWorkoutItems() {
             const cont = document.getElementById('all-workouts-list-container'); if (!cont) return;
             cont.innerHTML = allWorkouts.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào.</p>' : '';
-            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { // Sort alphabetically
+            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { 
                 const item = document.createElement('div'); item.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 item.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger" data-master-id="${w.objectId}" data-workout-name="${w.name}" data-image-url="${w.image_url || ''}">
@@ -797,14 +805,13 @@
                 const newStatus = !workouts[idx].completed; 
                 try { 
                     await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); 
-                    workouts[idx].completed = newStatus; // Update local state *after* successful save
+                    workouts[idx].completed = newStatus; 
                     updateCurrentDayWeeklyStat(); 
                     renderApp(); 
                 }
                 catch (e) { 
                     console.error("Lỗi toggle workout:", e); 
                     showMessage("Lỗi cập nhật trạng thái bài tập.", "error"); 
-                    // No rollback of local state needed as it was not changed prematurely
                 }
             }
         }
@@ -819,27 +826,21 @@
             const sets = parseInt(setsStr);
             const reps = parseInt(repsStr);
             let weight = parseFloat(weightStr);
-            if (isNaN(weight) || weight < 0) weight = 0; // Default to 0 if invalid or empty
+            if (isNaN(weight) || weight < 0) weight = 0; 
 
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
                 showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
             
             let masterId;
-            // Try to find an existing master workout. For simplicity, match only by name.
-            // A more robust match would consider sets/reps/default_weight as well, but that makes it complex.
-            // Let's assume for now that if a master workout with the same name exists, we use it.
-            // If specific sets/reps/weight are entered, they override the master's defaults for THIS daily entry.
-            let existingMaster = allWorkouts.find(w => w.name === name);
+            let existingMaster = allWorkouts.find(w => w.name === name); // Simple match by name
             
             if (existingMaster) {
                 masterId = existingMaster.objectId;
             } else {
                 try { 
                     const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: weight, image_url: img };
-                    // If this app assumes AllWorkouts might be shared, don't add ownerId. If user-specific, add ownerId.
-                    // For now, assuming AllWorkouts are general or managed elsewhere if ownerId not present by default.
-                    // if(userId) masterPayload.ownerId = userId; // Add if AllWorkouts are user-specific
+                    // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
                     const savedMaster = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                     masterId = savedMaster.objectId; 
                     allWorkouts.push(savedMaster); 
@@ -855,7 +856,7 @@
                 num_reps: reps, 
                 weight_kg: weight,
                 volume: sets * reps, 
-                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Use existing master image if available
+                image_url: img || (existingMaster ? existingMaster.image_url : ''), 
                 completed: false, 
                 workout_date: getTodayDateString() 
             };
@@ -863,7 +864,7 @@
             try {
                 const newDaily = await Backendless.Data.of('DailyWorkouts').save(dailyPayload); 
                 workouts.push(newDaily); 
-                totalWorkouts++; // Increment global total workouts
+                totalWorkouts++; 
                 updateCurrentDayWeeklyStat(); 
                 showMessage("Đã thêm bài tập cho hôm nay!", "success");
                 ['new-workout-name-today', 'new-workout-sets-today', 'new-workout-reps-today', 'new-workout-weight-today', 'new-workout-image-url-today'].forEach(id => document.getElementById(id).value = '');
@@ -887,17 +888,15 @@
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
                 showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
-            // Check if a workout with the exact same name, sets, reps, and default weight already exists
             if (allWorkouts.some(w => w.name === name && w.num_sets === sets && w.num_reps === reps && (w.default_weight_kg || 0) === defaultWeight)) { 
                 showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); return; 
             }
             try {
                 const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: defaultWeight, image_url: img };
-                // If AllWorkouts are user-specific, add ownerId:
-                // if(userId) masterPayload.ownerId = userId; 
+                // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
                 const saved = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                 allWorkouts.push(saved);
-                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Keep sorted
+                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
                 showMessage("Đã thêm vào danh sách chính!", "success");
                 ['new-workout-name-my-workouts', 'new-workout-sets-my-workouts', 'new-workout-reps-my-workouts', 'new-workout-default-weight-my-workouts', 'new-workout-image-url-my-workouts'].forEach(id => document.getElementById(id).value = '');
                 showAddWorkoutFormMyWorkouts = false; 
@@ -908,7 +907,6 @@
         async function addSelectedWorkoutToToday(masterWorkoutObjectId) {
             const workoutToAdd = allWorkouts.find(w => w.objectId === masterWorkoutObjectId);
             if (workoutToAdd) {
-                // Check if this master workout (by master_id) is already added for today
                 if (!workouts.some(w => w.master_id === masterWorkoutObjectId && w.workout_date === getTodayDateString())) {
                     const dailyPayload = { 
                         master_id: masterWorkoutObjectId, 
@@ -928,14 +926,14 @@
                         totalWorkouts++; 
                         updateCurrentDayWeeklyStat(); 
                         showMessage("Đã thêm vào bài tập hôm nay!", "success"); 
-                        renderApp(); // Re-render to show in Today tab if current, or just update data silently
+                        renderApp(); 
                     }
                     catch (e) { console.error("Lỗi thêm selected workout to today:", e); showMessage("Lỗi thêm bài tập vào hôm nay.", "error"); }
                 } else showMessage("Bài tập này đã có trong danh sách hôm nay!", "info");
             }
         }
 
-        async function removeWorkout(objectId) { // Removes from today's list
+        async function removeWorkout(objectId) { 
             try { 
                 await Backendless.Data.of('DailyWorkouts').remove({ objectId }); 
                 workouts = workouts.filter(w => w.objectId !== objectId); 
@@ -945,18 +943,18 @@
             }
             catch (e) { console.error("Lỗi xóa daily workout:", e); showMessage("Lỗi xóa bài tập.", "error"); }
         }
-        async function removeMasterWorkout(objectId) { // Removes from AllWorkouts (master list)
-            // Optional: Add a confirmation dialog here
-            if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính? Hành động này không thể hoàn tác và cũng sẽ xóa lịch sử liên quan (nếu có logic dọn dẹp).")) {
+        async function removeMasterWorkout(objectId) { 
+            if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
                 return;
             }
             try { 
                 await Backendless.Data.of('AllWorkouts').remove({ objectId }); 
                 allWorkouts = allWorkouts.filter(w => w.objectId !== objectId); 
-                // Optionally, also remove any DailyWorkout entries that reference this master_id if desired,
-                // though this might be complex and data-lossy if not handled carefully.
-                // For now, just remove from master list. Daily entries with this master_id will just lack some master info.
-                // workouts = workouts.filter(w => w.master_id !== objectId); // This would remove from today's list too
+                // Optionally, also remove from today's workouts if present
+                const wasInToday = workouts.some(w => w.master_id === objectId);
+                workouts = workouts.filter(w => w.master_id !== objectId);
+                if (wasInToday) updateCurrentDayWeeklyStat();
+
                 showMessage("Đã xóa bài tập khỏi danh sách chính.", "success"); 
                 renderApp(); 
             }
@@ -982,7 +980,7 @@
                 showMessage("Đăng nhập thành công!", "success");
                 document.getElementById('auth-container').style.display = 'none'; 
                 document.getElementById('app-container').style.display = 'block';
-                currentDayString = getTodayDateString(); // Reset currentDayString upon new login
+                currentDayString = getTodayDateString(); 
                 await loadDataFromBackendless(); 
                 initializeAppAndHandleDailyRollover(); 
                 renderApp();
@@ -990,18 +988,18 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); // Update time every 30s is enough
+            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); 
             try {
-                isLoading = true; // Set loading true before async check
+                isLoading = true; 
                 document.getElementById('loading-overlay').style.display = 'flex';
-                lucide.createIcons(); // Create icons for loading spinner
+                lucide.createIcons(); 
 
                 const currentUser = await Backendless.UserService.getCurrentUser();
                 if (currentUser) {
                     userId = currentUser.objectId;
                     document.getElementById('auth-container').style.display = 'none'; 
                     document.getElementById('app-container').style.display = 'block';
-                    currentDayString = getTodayDateString(); // Ensure currentDayString is fresh
+                    currentDayString = getTodayDateString(); 
                     await loadDataFromBackendless(); 
                     initializeAppAndHandleDailyRollover(); 
                     renderApp();
@@ -1011,7 +1009,7 @@
                     document.getElementById('app-container').style.display = 'none';
                     isLoading = false; 
                     document.getElementById('loading-overlay').style.display = 'none'; 
-                    lucide.createIcons(); // Create icons for auth page if needed
+                    lucide.createIcons(); 
                 }
             } catch (e) {
                 console.error("Lỗi kiểm tra đăng nhập:", e); 
@@ -1022,7 +1020,6 @@
                 document.getElementById('loading-overlay').style.display = 'none'; 
                 lucide.createIcons();
             } finally {
-                 // Ensure loading overlay is hidden if not already
                 if (!isLoading && document.getElementById('loading-overlay').style.display !== 'none') {
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
@@ -1049,12 +1046,11 @@
                 if (e.target === e.currentTarget) closeWorkoutDetailsModal(); 
             });
             
-            // Initial lucide call if not covered by other paths
             if(document.getElementById('app-container').style.display === 'none' && document.getElementById('auth-container').style.display === 'none'){
                  lucide.createIcons();
             }
         });
-        window.addEventListener('resize', () => { lucide.createIcons(); }); // Re-render icons on resize
+        window.addEventListener('resize', () => { lucide.createIcons(); }); 
     </script>
 </body>
 </html>
