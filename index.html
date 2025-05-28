@@ -46,7 +46,7 @@
             </div>
             <p class="text-center text-gray-400 text-xs mt-4">
                 Sử dụng email và mật khẩu để đăng nhập hoặc đăng ký.
-            </p>
+            p>
         </div>
     </div>
 
@@ -117,6 +117,15 @@
 
         // Supabase configuration
         const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // Your Supabase project URL
+
+        // !!! CRITICAL ERROR: The SUPABASE_ANON_KEY below is INVALID !!!
+        // The 'iat' (issued at) timestamp within this JWT token (1748362945) corresponds to
+        // Fri, 23 May 2025 16:22:25 GMT.
+        // If you are running this code before this date, Supabase will reject the key as "not yet valid",
+        // leading to "AuthApiError: Invalid API key" errors as seen in your console.
+        //
+        // TO FIX: Replace this key with the current, valid "anon" (public) key
+        // from your Supabase project dashboard (Project Settings -> API -> Project API keys).
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvZPnloye8'; // Your Supabase anon key
 
         // Initialize Supabase client
