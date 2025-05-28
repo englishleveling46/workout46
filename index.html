@@ -19,6 +19,43 @@
         #current-date {
             line-height: 1.4; /* Adjust line height for two lines of text */
         }
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1a1a1a;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white font-inter">
@@ -97,6 +134,23 @@
     </div>
 
     <div id="message-area" class="fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform -translate-y-full opacity-0" style="min-width: 250px;"></div>
+
+    <div id="workout-detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-workout-name" class="text-xl font-bold text-white"></h3>
+                <button id="close-workout-detail-modal" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="modal-workout-image-container" class="mb-4">
+                <img id="modal-workout-image" src="" alt="Workout Image" class="w-full h-48 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/6b7280/ffffff?text=No+Image';" />
+            </div>
+            <h4 class="text-lg font-semibold mb-2">Lịch sử 5 ngày gần nhất:</h4>
+            <div id="modal-workout-history" class="space-y-3">
+                </div>
+        </div>
+    </div>
 
     <script>
         // Global state variables
@@ -568,31 +622,35 @@
                     comparisonColor = 'text-gray-400';
                 }
 
-
                 workoutItem.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1">
                         <button class="toggle-workout-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${workout.objectId}">
                             ${workout.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
                         </button>
 
-                        ${workout.image_url ? `
-                            <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
-                        ` : `
-                            <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
-                                <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
-                            </div>
-                        `}
+                        <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger"
+                             data-master-id="${workout.master_id}"
+                             data-workout-name="${workout.name}"
+                             data-image-url="${workout.image_url || ''}">
+                            ${workout.image_url ? `
+                                <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
+                            ` : `
+                                <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0">
+                                    <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                            `}
 
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-medium text-sm ${
-                                    workout.completed ? 'text-green-400 line-through' : 'text-white'
-                                } truncate">
-                                    ${workout.name}
-                                </h3>
-                                <span class="text-xs ${comparisonColor}">${comparisonIcon}</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-medium text-sm ${
+                                        workout.completed ? 'text-green-400 line-through' : 'text-white'
+                                    } truncate">
+                                        ${workout.name}
+                                    </h3>
+                                    <span class="text-xs ${comparisonColor}">${comparisonIcon}</span>
+                                </div>
+                                <p class="text-gray-400 text-xs mt-1">${workout.num_sets} sets x ${workout.num_reps} reps</p>
                             </div>
-                            <p class="text-gray-400 text-xs mt-1">${workout.num_sets} sets x ${workout.num_reps} reps</p>
                         </div>
                     </div>
                     <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.objectId}">
@@ -607,6 +665,15 @@
             });
             document.querySelectorAll('.remove-workout-btn').forEach(button => {
                 button.onclick = (event) => removeWorkout(event.currentTarget.dataset.id);
+            });
+            // Add click listener for workout details popup
+            document.querySelectorAll('.workout-details-trigger').forEach(element => {
+                element.onclick = (event) => {
+                    const masterId = event.currentTarget.dataset.masterId;
+                    const workoutName = event.currentTarget.dataset.workoutName;
+                    const imageUrl = event.currentTarget.dataset.imageUrl;
+                    showWorkoutDetails(masterId, workoutName, imageUrl);
+                };
             });
             lucide.createIcons();
         }
@@ -631,6 +698,65 @@
                 }
             }
             return 'no_data'; // No previous data found
+        }
+
+        // Function to show workout details in a modal
+        async function showWorkoutDetails(masterId, workoutName, imageUrl) {
+            const modal = document.getElementById('workout-detail-modal');
+            const modalWorkoutName = document.getElementById('modal-workout-name');
+            const modalWorkoutImage = document.getElementById('modal-workout-image');
+            const modalWorkoutHistory = document.getElementById('modal-workout-history');
+
+            modalWorkoutName.textContent = workoutName;
+            modalWorkoutImage.src = imageUrl || 'https://placehold.co/400x200/6b7280/ffffff?text=No+Image';
+            if (!imageUrl) {
+                // If no image URL, hide the image container or show a placeholder div
+                document.getElementById('modal-workout-image-container').innerHTML = `
+                    <div class="w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg">
+                        <i data-lucide="image" class="w-24 h-24 text-gray-400"></i>
+                    </div>
+                `;
+            } else {
+                document.getElementById('modal-workout-image-container').innerHTML = `
+                    <img id="modal-workout-image" src="${imageUrl}" alt="Workout Image" class="w-full h-48 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/6b7280/ffffff?text=No+Image';" />
+                `;
+            }
+            lucide.createIcons(); // Re-render icons if placeholder div is used
+
+            // Fetch last 5 workout entries for this master_id
+            const queryBuilder = Backendless.DataQueryBuilder.create()
+                .setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`)
+                .setSortBy(['workout_date DESC'])
+                .setPageSize(5);
+
+            try {
+                const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
+                modalWorkoutHistory.innerHTML = ''; // Clear previous history
+
+                if (historyData && historyData.length > 0) {
+                    historyData.forEach(entry => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
+                        historyItem.innerHTML = `
+                            <span class="text-sm font-medium">${formatDate(entry.workout_date)}</span>
+                            <span class="text-sm text-gray-300">${entry.num_sets} sets x ${entry.num_reps} reps</span>
+                        `;
+                        modalWorkoutHistory.appendChild(historyItem);
+                    });
+                } else {
+                    modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử tập luyện cho bài tập này.</p>';
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải lịch sử bài tập:", error);
+                modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi khi tải lịch sử.</p>';
+            }
+
+            modal.classList.add('open');
+            lucide.createIcons();
+        }
+
+        function closeWorkoutDetailsModal() {
+            document.getElementById('workout-detail-modal').classList.remove('open');
         }
 
 
@@ -720,8 +846,8 @@
                         </div>
                     </div>
                     <div class="flex space-x-2 ml-2 flex-shrink-0">
-                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg text-xs transition-colors" data-id="${workout.objectId}">
-                            Thêm vào hôm nay
+                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 p-2 rounded-lg text-xs transition-colors" data-id="${workout.objectId}">
+                            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
                         </button>
                         <button class="remove-master-workout-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${workout.objectId}">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -1188,6 +1314,15 @@
                 showAddWorkoutFormMyWorkouts = false;
                 renderApp();
             });
+
+            // Modal close listeners
+            document.getElementById('close-workout-detail-modal').addEventListener('click', closeWorkoutDetailsModal);
+            document.getElementById('workout-detail-modal').addEventListener('click', (event) => {
+                if (event.target === event.currentTarget) { // Only close if clicking on the overlay itself, not the content
+                    closeWorkoutDetailsModal();
+                }
+            });
+
             lucide.createIcons();
         });
 
