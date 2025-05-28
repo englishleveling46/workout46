@@ -40,11 +40,11 @@
             visibility: visible;
         }
         .modal-content {
-            background-color: #1a1a1a;
+            background-color: #1a1a1a; /* Slightly lighter dark for modal content */
             border-radius: 1rem;
-            padding: 1.5rem;
+            padding: 1.5rem; /* 24px */
             width: 90%;
-            max-width: 500px; 
+            max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -144,54 +144,51 @@
                 </button>
             </div>
             <div id="modal-workout-image-container" class="mb-4 text-center">
-            </div>
+                </div>
 
-            <div id="modal-sets-reps-editor" class="bg-gray-800/50 p-4 rounded-lg mb-4" style="display: none;">
-                <h4 class="text-md font-semibold mb-4 text-center">Chỉnh sửa Hôm nay</h4>
-                
-                <!-- Sets -->
-                <div class="mb-3">
-                    <label for="modal-sets-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Sets</label>
-                    <div class="flex items-center justify-center space-x-2">
-                        <button id="sets-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="minus" class="w-4 h-4"></i>
+            <div id="modal-sets-reps-editor" class="bg-gray-800/50 p-3 rounded-lg mb-4" style="display: none;">
+                <h4 class="text-md font-semibold mb-3 text-center text-purple-300">Chỉnh sửa Hôm nay</h4>
+
+                <div class="flex items-center justify-between mb-2.5">
+                    <label for="modal-sets-input" class="text-sm font-medium text-gray-300">Sets</label>
+                    <div class="flex items-center space-x-1.5">
+                        <button id="sets-decrement-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
                         </button>
-                        <input type="number" id="modal-sets-input" class="w-16 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                        <button id="sets-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        <input type="number" id="modal-sets-input" class="w-14 bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-purple-500" min="1" />
+                        <button id="sets-increment-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Reps -->
-                <div class="mb-3">
-                    <label for="modal-reps-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Reps</label>
-                    <div class="flex items-center justify-center space-x-2">
-                        <button id="reps-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="minus" class="w-4 h-4"></i>
+                <div class="flex items-center justify-between mb-2.5">
+                    <label for="modal-reps-input" class="text-sm font-medium text-gray-300">Reps</label>
+                    <div class="flex items-center space-x-1.5">
+                        <button id="reps-decrement-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
                         </button>
-                        <input type="number" id="modal-reps-input" class="w-16 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                        <button id="reps-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Weight -->
-                <div class="mb-3">
-                    <label for="modal-weight-input" class="block text-sm font-medium text-gray-300 mb-1 text-center">Tạ (kg)</label>
-                    <div class="flex items-center justify-center space-x-2">
-                        <button id="weight-decrement-btn" class="bg-red-500/70 hover:bg-red-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <input type="number" id="modal-weight-input" class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                        <button id="weight-increment-btn" class="bg-green-500/70 hover:bg-green-600 p-2 rounded-md transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        <input type="number" id="modal-reps-input" class="w-14 bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-purple-500" min="1" />
+                        <button id="reps-increment-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
                 </div>
 
-                <button id="save-workout-details-btn" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-semibold mt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <label for="modal-weight-input" class="text-sm font-medium text-gray-300">Tạ (kg)</label>
+                    <div class="flex items-center space-x-1.5">
+                        <button id="weight-decrement-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <input type="number" id="modal-weight-input" class="w-20 bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                        <button id="weight-increment-btn" class="bg-gray-700 hover:bg-gray-600 p-1.5 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="save-workout-details-btn" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-semibold mt-3">
                     Lưu thay đổi
                 </button>
             </div>
@@ -205,42 +202,45 @@
     </div>
 
     <script>
-        // Global state variables
-        let workouts = []; // Daily workouts
-        let allWorkouts = []; // Master list of workouts
-        let streak = 0;
-        let totalWorkouts = 0;
-        let weeklyStats = [];
-        let currentTab = 'today';
-        let showAddWorkoutFormToday = false;
-        let showAddWorkoutFormMyWorkouts = false;
-        let isLoading = true; 
+        // Biến trạng thái toàn cục
+        let workouts = []; // Bài tập hàng ngày
+        let allWorkouts = []; // Danh sách tất cả bài tập (master list)
+        let streak = 0; // Chuỗi ngày tập luyện liên tiếp
+        let totalWorkouts = 0; // Tổng số bài tập đã hoàn thành
+        let weeklyStats = []; // Thống kê hàng tuần
+        let currentTab = 'today'; // Tab hiện tại đang được chọn
+        let showAddWorkoutFormToday = false; // Hiển thị form thêm bài tập ở tab "Hôm nay"
+        let showAddWorkoutFormMyWorkouts = false; // Hiển thị form thêm bài tập ở tab "Bài tập của tôi"
+        let isLoading = true; // Trạng thái tải dữ liệu
 
-        let currentDayString = new Date().toISOString().split('T')[0];
-        let streakLastAchievedDate = null;
+        let currentDayString = new Date().toISOString().split('T')[0]; // Ngày hiện tại dạng YYYY-MM-DD
+        let streakLastAchievedDate = null; // Ngày cuối cùng đạt được streak
 
-        const MAX_WEEKLY_STATS_DAYS = 30;
-        const MODAL_WEIGHT_ADJUST_STEP = 2.5;
+        const MAX_WEEKLY_STATS_DAYS = 30; // Số ngày tối đa lưu trữ trong thống kê tuần
+        const MODAL_WEIGHT_ADJUST_STEP = 2.5; // Bước nhảy khi điều chỉnh tạ trong modal
 
 
-        const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98'; // Replace with your App ID
-        const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA'; // Replace with your JS API Key
+        // Khóa Backendless - THAY THẾ BẰNG KHÓA CỦA BẠN
+        const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98'; 
+        const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA'; 
 
         Backendless.initApp(BACKENDLESS_APP_ID, BACKENDLESS_JS_API_KEY);
 
-        let userId = null; 
+        let userId = null; // ID của người dùng sau khi đăng nhập
 
+        // Lấy ngày hiện tại dưới dạng chuỗi YYYY-MM-DD
         function getTodayDateString() {
             return new Date().toISOString().split('T')[0];
         }
 
+        // Hiển thị thông báo
         function showMessage(message, type = 'info') {
             const messageArea = document.getElementById('message-area');
             messageArea.textContent = message;
             messageArea.className = `fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform opacity-100 ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' :
-                'bg-blue-500'
+                'bg-blue-500' // Mặc định là màu xanh dương cho 'info'
             }`;
             messageArea.style.transform = 'translateY(0)';
             messageArea.style.opacity = '1';
@@ -248,9 +248,10 @@
             setTimeout(() => {
                 messageArea.style.transform = 'translateY(-100%)';
                 messageArea.style.opacity = '0';
-            }, 3000); 
+            }, 3000); // Thông báo tự biến mất sau 3 giây
         }
 
+        // Cập nhật đồng hồ và ngày tháng trực tiếp
         function updateLiveDateTime() {
             const currentDateElement = document.getElementById('current-date');
             if (currentDateElement) {
@@ -269,11 +270,13 @@
             }
         }
 
+        // Tải dữ liệu từ Backendless
         async function loadDataFromBackendless() {
             isLoading = true;
             document.getElementById('loading-overlay').style.display = 'flex';
+            // Đảm bảo icon loader được render nếu chưa có
             if (document.querySelector('#loading-overlay [data-lucide="loader-2"]')) { 
-                 lucide.createIcons();
+                 lucide.createIcons(); // Tạo lại icon nếu cần
             }
 
             if (!userId) {
@@ -284,17 +287,20 @@
             }
 
             try {
+                // Tải bài tập hàng ngày của người dùng cho ngày hôm nay
                 const dailyWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create()
                     .setWhereClause(`ownerId = '${userId}' AND workout_date = '${getTodayDateString()}'`);
                 const dailyWorkoutsData = await Backendless.Data.of('DailyWorkouts').find(dailyWorkoutsQueryBuilder);
                 workouts = dailyWorkoutsData || [];
 
+                // Tải danh sách tất cả bài tập (master list)
                 const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create(); 
-                // If AllWorkouts are user-specific, add: .setWhereClause(`ownerId = '${userId}'`) 
-                // For this example, assuming AllWorkouts are general, or you'll add ownerId when creating them if needed.
+                // Nếu AllWorkouts là của riêng người dùng, thêm: .setWhereClause(`ownerId = '${userId}'`) 
+                // Ví dụ này giả định AllWorkouts là chung, hoặc bạn sẽ thêm ownerId khi tạo chúng nếu cần.
                 const allWorkoutsData = await Backendless.Data.of('AllWorkouts').find(allWorkoutsQueryBuilder);
                 allWorkouts = allWorkoutsData || [];
 
+                // Tải thống kê người dùng
                 const userStatsQueryBuilder = Backendless.DataQueryBuilder.create()
                     .setWhereClause(`ownerId = '${userId}'`);
                 const userStatsData = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
@@ -306,12 +312,14 @@
                     weeklyStats = userStats.weekly_stats ? JSON.parse(userStats.weekly_stats) : [];
                     streakLastAchievedDate = userStats.streak_last_achieved_date;
                 } else {
+                    // Nếu không có thống kê, tạo mới
                     const newUserStats = { ownerId: userId, streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]) };
                     await Backendless.Data.of('UserStats').save(newUserStats);
                 }
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu từ Backendless:", error);
-                showMessage(`Lỗi khi tải dữ liệu: ${error.message}.`, "error");
+                showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Vui lòng thử lại.`, "error");
+                // Reset về trạng thái mặc định nếu có lỗi
                 workouts = []; allWorkouts = []; streak = 0; totalWorkouts = 0; weeklyStats = []; streakLastAchievedDate = null;
             } finally {
                 isLoading = false;
@@ -319,12 +327,13 @@
             }
         }
 
-        async function saveDataToBackendless() { // This function specifically saves UserStats
+        // Lưu dữ liệu thống kê người dùng lên Backendless
+        async function saveDataToBackendless() { // Hàm này cụ thể lưu UserStats
             if (!userId) {
                 showMessage("Lỗi: Bạn cần đăng nhập để lưu dữ liệu.", "error");
                 return;
             }
-            const saveButton = document.getElementById('save-data-to-sheet-btn'); 
+            const saveButton = document.getElementById('save-data-to-sheet-btn'); // Giả sử có nút này
             const originalButtonHtml = saveButton ? saveButton.innerHTML : '';
             if (saveButton) {
                 saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Đang lưu...</span>';
@@ -337,13 +346,13 @@
                 const existingUserStats = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
                 let userStatsToSave = {
                     streak: streak, total_workouts: totalWorkouts,
-                    weekly_stats: JSON.stringify(weeklyStats),
+                    weekly_stats: JSON.stringify(weeklyStats), // Chuyển mảng thành chuỗi JSON
                     streak_last_achieved_date: streakLastAchievedDate
                 };
                 if (existingUserStats && existingUserStats.length > 0) {
-                    userStatsToSave.objectId = existingUserStats[0].objectId;
+                    userStatsToSave.objectId = existingUserStats[0].objectId; // Cập nhật bản ghi hiện có
                 } else {
-                    userStatsToSave.ownerId = userId;
+                    userStatsToSave.ownerId = userId; // Tạo bản ghi mới nếu chưa có
                 }
                 await Backendless.Data.of('UserStats').save(userStatsToSave);
                 if (saveButton) showMessage("Dữ liệu thống kê đã được lưu!", "success");
@@ -352,55 +361,66 @@
                 showMessage(`Lỗi khi lưu dữ liệu thống kê: ${error.message}.`, "error");
             } finally {
                 if (saveButton) {
-                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Lưu dữ liệu</span>';
+                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Lưu dữ liệu</span>'; // Khôi phục nút
                     saveButton.disabled = false;
                     lucide.createIcons();
                 }
             }
         }
-
+        
+        // Khởi tạo ứng dụng và xử lý khi qua ngày mới
         function initializeAppAndHandleDailyRollover() {
             const todayStr = getTodayDateString();
-            if (currentDayString !== todayStr) {
+            if (currentDayString !== todayStr) { // Nếu đã qua ngày mới
+                // Tính toán số liệu của ngày cũ (currentDayString)
                 const pastDayActualCompletions = workouts.filter(w => w.completed).length;
                 const pastDayTotalTasks = workouts.length;
+
+                // Tìm xem ngày cũ đã có trong weeklyStats chưa
                 const lastDayStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
 
+                // Nếu ngày cũ là ngày hôm qua của ngày hiện tại (todayStr)
                 if (lastDayStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
+                    // Cập nhật số liệu cho ngày hôm qua nếu nó đã tồn tại
                     weeklyStats[lastDayStatIndex].total = pastDayTotalTasks;
                     weeklyStats[lastDayStatIndex].completed = pastDayActualCompletions;
-                    weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name);
-                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) {
+                    weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name); // Lưu tên các bài tập đã làm
+                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // Nếu không phải hôm qua, nhưng có dữ liệu, thì thêm mới
                      weeklyStats.push({
                         date: currentDayString, total: pastDayTotalTasks,
                         completed: pastDayActualCompletions, exercises: workouts.map(w => w.name)
                     });
                 }
 
+                // Sắp xếp lại weeklyStats theo ngày giảm dần và giới hạn số ngày
                 weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
                 if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
 
-                if (pastDayTotalTasks > 0 && pastDayActualCompletions === pastDayTotalTasks) {
+                // Cập nhật streak
+                if (pastDayTotalTasks > 0 && pastDayActualCompletions === pastDayTotalTasks) { // Hoàn thành tất cả bài tập ngày cũ
                     if (streakLastAchievedDate) {
-                        const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0];
-                        if (streakLastAchievedDate === expectedPrevStreakDate) streak++; else streak = 1;
-                    } else streak = 1;
-                    streakLastAchievedDate = currentDayString;
+                        const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Ngày streak dự kiến trước đó
+                        if (streakLastAchievedDate === expectedPrevStreakDate) streak++; else streak = 1; // Reset streak nếu không liên tục
+                    } else streak = 1; // Bắt đầu streak mới
+                    streakLastAchievedDate = currentDayString; // Lưu ngày đạt streak
                 } else {
+                    // Nếu ngày cũ là hôm qua và không hoàn thành hết, reset streak
                     const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
-                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { 
+                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { // Chỉ reset nếu có bài tập vào ngày hôm qua
                         streak = 0; 
-                        streakLastAchievedDate = null; 
+                        streakLastAchievedDate = null; // Reset ngày streak
                     }
+                    // Nếu không phải hôm qua, không làm gì với streak (tránh reset oan)
                 }
-                workouts = []; 
-                currentDayString = todayStr;
+                workouts = []; // Reset bài tập cho ngày mới
+                currentDayString = todayStr; // Cập nhật ngày hiện tại
             }
-            updateCurrentDayWeeklyStat(); 
+            updateCurrentDayWeeklyStat(); // Cập nhật thống kê cho ngày hiện tại (có thể là ngày mới hoặc vẫn là ngày cũ nếu chưa qua 0h)
         }
 
+        // Cập nhật thống kê cho ngày hiện tại trong weeklyStats
         function updateCurrentDayWeeklyStat() {
-            if (!currentDayString) return;
+            if (!currentDayString) return; // Chưa có ngày hiện tại
             const todayActualCompletions = workouts.filter(w => w.completed).length;
             const todayTotalTasks = workouts.length;
             const todayStatPayload = {
@@ -408,33 +428,37 @@
                 completed: todayActualCompletions, exercises: workouts.map(w => w.name)
             };
             const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
-            if (existingStatIndex > -1) weeklyStats[existingStatIndex] = todayStatPayload;
-            else weeklyStats.push(todayStatPayload);
-            weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
-            if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
-            saveDataToBackendless(); 
+            if (existingStatIndex > -1) weeklyStats[existingStatIndex] = todayStatPayload; // Cập nhật nếu đã có
+            else weeklyStats.push(todayStatPayload); // Thêm mới nếu chưa có
+            
+            weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sắp xếp lại
+            if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Giới hạn số ngày
+
+            saveDataToBackendless(); // Lưu lại thống kê người dùng
         }
 
+        // Các hàm tiện ích lấy thông tin thống kê
         function getCompletedCount() { return workouts.filter(w => w.completed).length; }
         function getCompletionRate() { const c = getCompletedCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
-        function formatDate(dateString) {
+        function formatDate(dateString) { // Định dạng ngày tháng (VD: T2, 28/05)
             const date = new Date(dateString); const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-            const localDate = new Date(date.getTime() + userTimezoneOffset); 
+            const localDate = new Date(date.getTime() + userTimezoneOffset); // Điều chỉnh múi giờ
             return localDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', weekday: 'short' });
         }
-        function getWeeklyAverage() {
+        function getWeeklyAverage() { // Tỷ lệ hoàn thành trung bình 7 ngày gần nhất
             if (weeklyStats.length === 0) return 0; const relevantStats = weeklyStats.slice(0, 7);
             const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
             const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
             return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
         }
-        function getMostActiveDay() {
+        function getMostActiveDay() { // Ngày hoàn thành nhiều bài tập nhất
             if (weeklyStats.length === 0) return 'Chưa có'; let maxCompleted = -1; let mostActiveDayData = null;
             for (const day of weeklyStats) { if (day.completed > maxCompleted) { maxCompleted = day.completed; mostActiveDayData = day; } }
             return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
         }
         function getCurrentWeekTotalCompleted() { const r = weeklyStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
 
+        // Render header (tabs)
         function renderHeader() {
             const todayTabBtn = document.getElementById('today-tab-btn');
             const myWorkoutsTabBtn = document.getElementById('my-workouts-tab-btn');
@@ -447,6 +471,7 @@
             statsTabBtn.className = `${baseClass} ${currentTab === 'stats' ? activeClass : inactiveClass}`;
         }
 
+        // Render nội dung tab "Hôm nay"
         function renderTodayTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
@@ -496,16 +521,18 @@
                     </div>
                     <div id="workout-list-container" class="p-4 space-y-3"></div>
                 </div>`;
+            // Gán sự kiện cho các nút
             document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderApp(); };
             document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
             if (showAddWorkoutFormToday) {
                 document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderApp(); };
                 document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
             }
-            renderWorkoutItems();
-            lucide.createIcons();
+            renderWorkoutItems(); // Render danh sách các bài tập
+            lucide.createIcons(); // Tạo icons
         }
 
+        // Render các mục bài tập trong tab "Hôm nay"
         async function renderWorkoutItems() {
             const workoutListContainer = document.getElementById('workout-list-container');
             if (!workoutListContainer) return;
@@ -514,13 +541,15 @@
             for (const workout of workouts) {
                 const workoutItem = document.createElement('div');
                 workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${workout.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
-                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); 
+                
+                // So sánh với lần tập trước
+                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Có thể thêm * weight nếu muốn so sánh volume có trọng lượng
                 const comparisonResult = await getPreviousWorkoutPerformance(workout.master_id, currentVolume);
                 let comparisonIcon = '', comparisonColor = 'text-gray-400';
                 if (comparisonResult === 'increased') { comparisonIcon = '<i data-lucide="arrow-up" class="w-4 h-4 text-green-400"></i>'; comparisonColor = 'text-green-400'; }
                 else if (comparisonResult === 'decreased') { comparisonIcon = '<i data-lucide="arrow-down" class="w-4 h-4 text-red-400"></i>'; comparisonColor = 'text-red-400'; }
                 else if (comparisonResult === 'same') { comparisonIcon = '<i data-lucide="minus" class="w-4 h-4 text-blue-400"></i>'; comparisonColor = 'text-blue-400'; }
-                else { comparisonIcon = '<i data-lucide="info" class="w-4 h-4 text-gray-400"></i>'; }
+                else { comparisonIcon = '<i data-lucide="info" class="w-4 h-4 text-gray-400"></i>'; } // 'no_data'
 
                 workoutItem.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1">
@@ -541,6 +570,7 @@
                     <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
                 workoutListContainer.appendChild(workoutItem);
             }
+            // Gán sự kiện cho các nút toggle, remove, và mở modal chi tiết
             document.querySelectorAll('.toggle-workout-btn').forEach(b => { b.onclick = (e) => toggleWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-workout-btn').forEach(b => { b.onclick = (e) => removeWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#workout-list-container .workout-details-trigger').forEach(el => {
@@ -549,27 +579,30 @@
             lucide.createIcons();
         }
 
+        // Lấy hiệu suất của bài tập trước đó để so sánh
         async function getPreviousWorkoutPerformance(masterId, currentVolume) {
-            if (!masterId) return 'no_data'; // No master_id, no history to compare
+            if (!masterId) return 'no_data'; // Không có master_id, không có lịch sử để so sánh
             const qb = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}' AND workout_date < '${getTodayDateString()}'`).setSortBy(['workout_date DESC']).setPageSize(1);
             const data = await Backendless.Data.of('DailyWorkouts').find(qb);
             if (data && data.length > 0) {
-                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); 
+                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); // Có thể thêm * weight nếu muốn
                 if (currentVolume > prevVol) return 'increased'; if (currentVolume < prevVol) return 'decreased'; return 'same';
-            } return 'no_data';
+            } return 'no_data'; // Không có dữ liệu trước đó
         }
         
+        // Hàm tiện ích để gán lại listener cho một element (tránh listener bị chồng chéo)
         function rebindListeners(elementId, newOnClick) {
             const originalElement = document.getElementById(elementId);
             if (!originalElement) return null;
-            const newElement = originalElement.cloneNode(true);
-            originalElement.parentNode.replaceChild(newElement, originalElement);
+            const newElement = originalElement.cloneNode(true); // Sao chép element
+            originalElement.parentNode.replaceChild(newElement, originalElement); // Thay thế element cũ bằng element mới
             if (newOnClick) {
-                newElement.onclick = newOnClick;
+                newElement.onclick = newOnClick; // Gán listener mới
             }
-            return newElement; 
+            return newElement; // Trả về element mới đã được gán listener
         }
 
+        // Hiển thị modal chi tiết bài tập
         async function showWorkoutDetails(masterId, workoutName, imageUrl, currentWorkoutObjectId = null) {
             const modal = document.getElementById('workout-detail-modal');
             const modalWorkoutName = document.getElementById('modal-workout-name');
@@ -584,15 +617,16 @@
             const modalWorkoutHistory = document.getElementById('modal-workout-history');
 
             modalWorkoutName.textContent = workoutName;
+            // Xử lý hiển thị hình ảnh hoặc placeholder
             if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl.trim() === '') {
                 modalWorkoutImageContainer.innerHTML = `<div class="w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg"><i data-lucide="image" class="w-24 h-24 text-gray-400"></i></div>`;
             } else {
                 modalWorkoutImageContainer.innerHTML = `<img src="${imageUrl}" alt="Workout Image" class="w-full h-48 object-contain rounded-lg" onerror="this.onerror=null;this.parentElement.innerHTML = '<div class=\\'w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg\\'><i data-lucide=\\'image-off\\' class=\\'w-24 h-24 text-gray-400\\'></i></div>'; lucide.createIcons();" />`;
             }
             
-            if (currentWorkoutObjectId) { // Popup from "Today" tab
-                modalSetsRepsEditor.style.display = 'block';
-                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'none';
+            if (currentWorkoutObjectId) { // Nếu mở từ tab "Hôm nay" (có objectId của bài tập hôm nay)
+                modalSetsRepsEditor.style.display = 'block'; // Hiển thị form chỉnh sửa
+                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'none'; // Ẩn lịch sử
 
                 const currentWorkout = workouts.find(w => w.objectId === currentWorkoutObjectId);
                 if (currentWorkout) {
@@ -600,10 +634,12 @@
                     modalRepsInput.value = currentWorkout.num_reps;
                     modalWeightInput.value = currentWorkout.weight_kg != null ? currentWorkout.weight_kg : 0;
                 } else {
+                    // Fallback nếu không tìm thấy workout (ít khi xảy ra)
                     modalSetsInput.value = 1; modalRepsInput.value = 1; modalWeightInput.value = 0;
                     console.warn(`Workout with objectId ${currentWorkoutObjectId} not found for modal editor.`);
                 }
 
+                // Gán lại listeners cho các nút +/- và Lưu bằng rebindListeners để tránh lỗi
                 rebindListeners('sets-decrement-btn', () => {
                     const cv = parseInt(modalSetsInput.value); modalSetsInput.value = Math.max(1, (isNaN(cv) ? 2 : cv) - 1);
                 });
@@ -636,16 +672,17 @@
                     } else { showMessage("Sets, Reps phải là số dương và Tạ phải là số không âm!", "error"); }
                 });
 
-            } else { // Popup from "My Workouts" tab
-                modalSetsRepsEditor.style.display = 'none';
-                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'block';
+            } else { // Nếu mở từ tab "Bài tập của tôi" (chỉ có masterId, không có objectId của bài tập hôm nay)
+                modalSetsRepsEditor.style.display = 'none'; // Ẩn form chỉnh sửa
+                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'block'; // Hiển thị lịch sử
                 if (!masterId) {
                      modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Không có master ID để tải lịch sử.</p>';
                 } else {
+                    // Tải và hiển thị lịch sử 5 lần tập gần nhất của bài tập này
                     const queryBuilder = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`).setSortBy(['workout_date DESC']).setPageSize(5);
                     try {
                         const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
-                        modalWorkoutHistory.innerHTML = ''; 
+                        modalWorkoutHistory.innerHTML = ''; // Xóa lịch sử cũ
                         if (historyData && historyData.length > 0) {
                             historyData.forEach(entry => { 
                                 const item = document.createElement('div'); item.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
@@ -659,12 +696,14 @@
                     }
                 }
             }
-            modal.classList.add('open');
-            lucide.createIcons();
+            modal.classList.add('open'); // Mở modal
+            lucide.createIcons(); // Tạo icons
         }
 
+        // Đóng modal chi tiết bài tập
         function closeWorkoutDetailsModal() { document.getElementById('workout-detail-modal').classList.remove('open'); }
 
+        // Cập nhật chi tiết bài tập (Sets, Reps, Tạ)
         async function updateWorkoutDetails(objectId, newSets, newReps, newWeight) {
             const workoutIndex = workouts.findIndex(w => w.objectId === objectId);
             if (workoutIndex > -1) {
@@ -673,22 +712,24 @@
                     num_sets: newSets, 
                     num_reps: newReps, 
                     weight_kg: newWeight,
-                    volume: newSets * newReps 
+                    volume: newSets * newReps // Cập nhật volume nếu cần
                 };
                 try {
-                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData);
+                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData); // Lưu vào Backendless
+                    // Cập nhật lại trong mảng workouts cục bộ
                     workouts[workoutIndex].num_sets = newSets; 
                     workouts[workoutIndex].num_reps = newReps; 
                     workouts[workoutIndex].weight_kg = newWeight;
                     workouts[workoutIndex].volume = newSets * newReps;
-                    updateCurrentDayWeeklyStat(); 
+                    updateCurrentDayWeeklyStat(); // Cập nhật thống kê ngày
                     showMessage("Đã cập nhật chi tiết bài tập!", "success");
-                    closeWorkoutDetailsModal(); 
-                    renderApp();
+                    closeWorkoutDetailsModal(); // Đóng modal
+                    renderApp(); // Render lại giao diện
                 } catch (error) { console.error("Lỗi cập nhật chi tiết bài tập:", error); showMessage("Lỗi cập nhật chi tiết bài tập.", "error"); }
             }
         }
 
+        // Render nội dung tab "Bài tập của tôi"
         function renderMyWorkoutsTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
@@ -711,19 +752,21 @@
                     </div>
                     <div id="all-workouts-list-container" class="p-4 space-y-3"></div>
                 </div>`;
+            // Gán sự kiện cho các nút
             document.getElementById('add-workout-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = true; renderApp(); };
             if (showAddWorkoutFormMyWorkouts) {
                 document.getElementById('close-add-form-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = false; renderApp(); };
                 document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
             }
-            renderAllWorkoutItems();
+            renderAllWorkoutItems(); // Render danh sách tất cả bài tập
             lucide.createIcons();
         }
 
+        // Render danh sách tất cả bài tập (master list)
         function renderAllWorkoutItems() {
             const cont = document.getElementById('all-workouts-list-container'); if (!cont) return;
             cont.innerHTML = allWorkouts.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào.</p>' : '';
-            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { 
+            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { // Sắp xếp theo tên
                 const item = document.createElement('div'); item.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 item.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger" data-master-id="${w.objectId}" data-workout-name="${w.name}" data-image-url="${w.image_url || ''}">
@@ -739,14 +782,17 @@
                     </div>`;
                 cont.appendChild(item);
             });
+            // Gán sự kiện cho các nút
             document.querySelectorAll('.add-to-today-btn').forEach(b => { b.onclick = (e) => addSelectedWorkoutToToday(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-master-workout-btn').forEach(b => { b.onclick = (e) => removeMasterWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#all-workouts-list-container .workout-details-trigger').forEach(el => {
+                // Khi click vào bài tập, hiển thị modal chi tiết (chỉ lịch sử, không chỉnh sửa)
                 el.onclick = (e) => showWorkoutDetails(e.currentTarget.dataset.masterId, e.currentTarget.dataset.workoutName, e.currentTarget.dataset.imageUrl, null);
             });
             lucide.createIcons();
         }
 
+        // Render nội dung tab "Thống kê"
         function renderStatsTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
@@ -767,10 +813,11 @@
                             <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveDay()}</span></div>
                             <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng bài tập</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalWorkouts}</span></div>
                         </div></div></div>`;
-            renderWeeklyStatsHistory();
+            renderWeeklyStatsHistory(); // Render lịch sử thống kê tuần
             lucide.createIcons();
         }
 
+        // Render lịch sử thống kê tuần
         function renderWeeklyStatsHistory() {
             const cont = document.getElementById('weekly-stats-container'); if (!cont) return;
             cont.innerHTML = weeklyStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê.</p>' : '';
@@ -778,7 +825,7 @@
                 const perc = day.total > 0 ? (day.completed / day.total) * 100 : 0;
                 const isToday = day.date === getTodayDateString();
                 const item = document.createElement('div');
-                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-gray-800/50'}`;
+                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-gray-800/50'}`; // Highlight ngày hiện tại
                 item.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center space-x-2"><span class="text-sm font-medium">${formatDate(day.date)}${isToday && day.date === currentDayString ? '<span class="text-purple-400 ml-1">(Hôm nay)</span>' : ''}</span></div>
@@ -790,24 +837,26 @@
             lucide.createIcons();
         }
 
+        // Render toàn bộ ứng dụng (header và tab hiện tại)
         function renderApp() {
             document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
             renderHeader();
             if (currentTab === 'today') renderTodayTab();
             else if (currentTab === 'my-workouts') renderMyWorkoutsTab();
             else renderStatsTab();
-            lucide.createIcons();
+            lucide.createIcons(); // Đảm bảo icons được render sau mỗi lần cập nhật DOM
         }
 
+        // Chuyển đổi trạng thái hoàn thành của bài tập
         async function toggleWorkout(objectId) {
             const idx = workouts.findIndex(w => w.objectId === objectId);
             if (idx > -1) {
                 const newStatus = !workouts[idx].completed; 
                 try { 
-                    await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); 
-                    workouts[idx].completed = newStatus; 
-                    updateCurrentDayWeeklyStat(); 
-                    renderApp(); 
+                    await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); // Lưu vào Backendless
+                    workouts[idx].completed = newStatus; // Cập nhật cục bộ
+                    updateCurrentDayWeeklyStat(); // Cập nhật thống kê
+                    renderApp(); // Render lại
                 }
                 catch (e) { 
                     console.error("Lỗi toggle workout:", e); 
@@ -816,6 +865,7 @@
             }
         }
 
+        // Thêm bài tập mới từ tab "Hôm nay"
         async function addNewWorkoutFromTodayTab() {
             const name = document.getElementById('new-workout-name-today').value.trim();
             const setsStr = document.getElementById('new-workout-sets-today').value.trim();
@@ -826,28 +876,31 @@
             const sets = parseInt(setsStr);
             const reps = parseInt(repsStr);
             let weight = parseFloat(weightStr);
-            if (isNaN(weight) || weight < 0) weight = 0; 
+            if (isNaN(weight) || weight < 0) weight = 0; // Mặc định tạ là 0 nếu không hợp lệ
 
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
                 showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
             
             let masterId;
-            let existingMaster = allWorkouts.find(w => w.name === name); // Simple match by name
+            // Kiểm tra xem bài tập này đã có trong danh sách chính (AllWorkouts) chưa (dựa trên tên)
+            let existingMaster = allWorkouts.find(w => w.name === name); // So khớp đơn giản bằng tên
             
             if (existingMaster) {
-                masterId = existingMaster.objectId;
+                masterId = existingMaster.objectId; // Sử dụng masterId hiện có
             } else {
+                // Nếu chưa có, tạo mới trong AllWorkouts
                 try { 
                     const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: weight, image_url: img };
-                    // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
+                    // if(userId) masterPayload.ownerId = userId; // Nếu AllWorkouts là của riêng người dùng
                     const savedMaster = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                     masterId = savedMaster.objectId; 
-                    allWorkouts.push(savedMaster); 
+                    allWorkouts.push(savedMaster); // Thêm vào danh sách cục bộ
                 }
                 catch(e) { console.error("Lỗi thêm master workout:", e); showMessage("Lỗi thêm bài tập chính.", "error"); return; }
             }
 
+            // Tạo bản ghi cho DailyWorkouts
             const dailyPayload = { 
                 master_id: masterId, 
                 ownerId: userId, 
@@ -855,8 +908,8 @@
                 num_sets: sets, 
                 num_reps: reps, 
                 weight_kg: weight,
-                volume: sets * reps, 
-                image_url: img || (existingMaster ? existingMaster.image_url : ''), 
+                volume: sets * reps, // Tính volume
+                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Ưu tiên ảnh mới, nếu không có thì lấy ảnh từ master
                 completed: false, 
                 workout_date: getTodayDateString() 
             };
@@ -867,12 +920,14 @@
                 totalWorkouts++; 
                 updateCurrentDayWeeklyStat(); 
                 showMessage("Đã thêm bài tập cho hôm nay!", "success");
+                // Xóa các trường input
                 ['new-workout-name-today', 'new-workout-sets-today', 'new-workout-reps-today', 'new-workout-weight-today', 'new-workout-image-url-today'].forEach(id => document.getElementById(id).value = '');
-                showAddWorkoutFormToday = false; 
+                showAddWorkoutFormToday = false; // Ẩn form
                 renderApp();
             } catch (e) { console.error("Lỗi thêm daily workout:", e); showMessage("Lỗi thêm bài tập hôm nay.", "error"); }
         }
 
+        // Thêm bài tập mới từ tab "Bài tập của tôi" (thêm vào danh sách chính AllWorkouts)
         async function addNewWorkoutFromMyWorkoutsTab() {
             const name = document.getElementById('new-workout-name-my-workouts').value.trim();
             const setsStr = document.getElementById('new-workout-sets-my-workouts').value.trim();
@@ -888,25 +943,29 @@
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
                 showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
+            // Kiểm tra trùng lặp trong danh sách chính
             if (allWorkouts.some(w => w.name === name && w.num_sets === sets && w.num_reps === reps && (w.default_weight_kg || 0) === defaultWeight)) { 
                 showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); return; 
             }
             try {
                 const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: defaultWeight, image_url: img };
-                // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
+                // if(userId) masterPayload.ownerId = userId; // Nếu AllWorkouts là của riêng người dùng
                 const saved = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                 allWorkouts.push(saved);
-                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Sắp xếp lại
                 showMessage("Đã thêm vào danh sách chính!", "success");
+                // Xóa các trường input
                 ['new-workout-name-my-workouts', 'new-workout-sets-my-workouts', 'new-workout-reps-my-workouts', 'new-workout-default-weight-my-workouts', 'new-workout-image-url-my-workouts'].forEach(id => document.getElementById(id).value = '');
-                showAddWorkoutFormMyWorkouts = false; 
+                showAddWorkoutFormMyWorkouts = false; // Ẩn form
                 renderApp();
             } catch (e) { console.error("Lỗi thêm master workout:", e); showMessage("Lỗi thêm bài tập vào danh sách chính.", "error"); }
         }
 
+        // Thêm bài tập đã chọn từ danh sách chính vào danh sách hôm nay
         async function addSelectedWorkoutToToday(masterWorkoutObjectId) {
             const workoutToAdd = allWorkouts.find(w => w.objectId === masterWorkoutObjectId);
             if (workoutToAdd) {
+                // Kiểm tra xem bài tập này (dựa trên master_id) đã có trong danh sách hôm nay chưa
                 if (!workouts.some(w => w.master_id === masterWorkoutObjectId && w.workout_date === getTodayDateString())) {
                     const dailyPayload = { 
                         master_id: masterWorkoutObjectId, 
@@ -914,7 +973,7 @@
                         name: workoutToAdd.name, 
                         num_sets: workoutToAdd.num_sets, 
                         num_reps: workoutToAdd.num_reps, 
-                        weight_kg: workoutToAdd.default_weight_kg != null ? workoutToAdd.default_weight_kg : 0,
+                        weight_kg: workoutToAdd.default_weight_kg != null ? workoutToAdd.default_weight_kg : 0, // Lấy tạ mặc định
                         volume: (workoutToAdd.num_sets || 0) * (workoutToAdd.num_reps || 0), 
                         image_url: workoutToAdd.image_url || '', 
                         completed: false, 
@@ -933,6 +992,7 @@
             }
         }
 
+        // Xóa bài tập khỏi danh sách hôm nay
         async function removeWorkout(objectId) { 
             try { 
                 await Backendless.Data.of('DailyWorkouts').remove({ objectId }); 
@@ -943,17 +1003,40 @@
             }
             catch (e) { console.error("Lỗi xóa daily workout:", e); showMessage("Lỗi xóa bài tập.", "error"); }
         }
+        // Xóa bài tập khỏi danh sách chính (AllWorkouts)
         async function removeMasterWorkout(objectId) { 
-            if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
-                return;
-            }
+            // Sử dụng một hộp thoại xác nhận tùy chỉnh thay vì window.confirm
+            // Ví dụ: hiển thị một modal xác nhận
+            // Hiện tại, để đơn giản, bỏ qua bước xác nhận hoặc bạn có thể tự thêm
+            // if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
+            //     return;
+            // }
+            // Thay vì confirm, bạn có thể hiển thị một modal tùy chỉnh ở đây
+            // và chỉ thực hiện xóa nếu người dùng xác nhận trong modal đó.
+            // Ví dụ:
+            // showCustomConfirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?", async () => {
+            //    // logic xóa ở đây
+            // });
+            // return; // Chờ xác nhận từ modal
+            
+            // Tạm thời vẫn dùng cách cũ, nhưng khuyến khích dùng modal tùy chỉnh
+             if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính? Thao tác này cũng sẽ xóa bài tập này khỏi lịch sử tập luyện của bạn (nếu có).")) {
+                 return;
+             }
+
+
             try { 
                 await Backendless.Data.of('AllWorkouts').remove({ objectId }); 
                 allWorkouts = allWorkouts.filter(w => w.objectId !== objectId); 
-                // Optionally, also remove from today's workouts if present
+                // Tùy chọn: Xóa bài tập này khỏi danh sách hôm nay nếu có
                 const wasInToday = workouts.some(w => w.master_id === objectId);
                 workouts = workouts.filter(w => w.master_id !== objectId);
                 if (wasInToday) updateCurrentDayWeeklyStat();
+
+                // Tùy chọn: Xóa khỏi lịch sử (DailyWorkouts) của tất cả các ngày
+                // const relatedDailyQuery = Backendless.DataQueryBuilder.create().setWhereClause(`master_id = '${objectId}' AND ownerId = '${userId}'`);
+                // await Backendless.Data.of('DailyWorkouts').bulkDelete(relatedDailyQuery);
+                // Cần tải lại weeklyStats nếu muốn nó phản ánh việc xóa khỏi lịch sử
 
                 showMessage("Đã xóa bài tập khỏi danh sách chính.", "success"); 
                 renderApp(); 
@@ -961,6 +1044,7 @@
             catch (e) { console.error("Lỗi xóa master workout:", e); showMessage("Lỗi xóa bài tập khỏi danh sách chính.", "error"); }
         }
 
+        // Xử lý đăng ký
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
             if (!email || !pass) { showMessage("Vui lòng nhập email và mật khẩu.", "error"); return; }
@@ -971,47 +1055,51 @@
             }
             catch (e) { showMessage(`Đăng ký thất bại: ${e.message}`, "error"); console.error("Lỗi Đăng ký:", e); }
         }
+        // Xử lý đăng nhập
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
             if (!email || !pass) { showMessage("Vui lòng nhập email và mật khẩu.", "error"); return; }
             try { 
-                const user = await Backendless.UserService.login(email, pass, true); 
+                const user = await Backendless.UserService.login(email, pass, true); // true để ghi nhớ đăng nhập
                 userId = user.objectId;
                 showMessage("Đăng nhập thành công!", "success");
                 document.getElementById('auth-container').style.display = 'none'; 
                 document.getElementById('app-container').style.display = 'block';
-                currentDayString = getTodayDateString(); 
-                await loadDataFromBackendless(); 
-                initializeAppAndHandleDailyRollover(); 
+                currentDayString = getTodayDateString(); // Đặt lại ngày hiện tại sau khi đăng nhập
+                await loadDataFromBackendless(); // Tải dữ liệu cho người dùng mới
+                initializeAppAndHandleDailyRollover(); // Xử lý chuyển ngày
                 renderApp();
             } catch (e) { showMessage(`Đăng nhập thất bại: ${e.message}`, "error"); console.error("Lỗi Đăng nhập:", e); }
         }
 
+        // Sự kiện khi DOM đã tải xong
         document.addEventListener('DOMContentLoaded', async () => {
-            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); 
+            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); // Cập nhật đồng hồ mỗi 30 giây
             try {
                 isLoading = true; 
                 document.getElementById('loading-overlay').style.display = 'flex';
-                lucide.createIcons(); 
+                lucide.createIcons(); // Tạo icons ban đầu
 
-                const currentUser = await Backendless.UserService.getCurrentUser();
+                const currentUser = await Backendless.UserService.getCurrentUser(); // Kiểm tra xem người dùng đã đăng nhập chưa
                 if (currentUser) {
                     userId = currentUser.objectId;
-                    document.getElementById('auth-container').style.display = 'none'; 
-                    document.getElementById('app-container').style.display = 'block';
+                    document.getElementById('auth-container').style.display = 'none'; // Ẩn form đăng nhập/đăng ký
+                    document.getElementById('app-container').style.display = 'block'; // Hiển thị ứng dụng
                     currentDayString = getTodayDateString(); 
                     await loadDataFromBackendless(); 
                     initializeAppAndHandleDailyRollover(); 
                     renderApp();
                 } else {
+                    // Người dùng chưa đăng nhập
                     userId = null; 
-                    document.getElementById('auth-container').style.display = 'flex'; 
-                    document.getElementById('app-container').style.display = 'none';
+                    document.getElementById('auth-container').style.display = 'flex'; // Hiển thị form đăng nhập/đăng ký
+                    document.getElementById('app-container').style.display = 'none'; // Ẩn ứng dụng
                     isLoading = false; 
-                    document.getElementById('loading-overlay').style.display = 'none'; 
-                    lucide.createIcons(); 
+                    document.getElementById('loading-overlay').style.display = 'none'; // Ẩn loading
+                    lucide.createIcons(); // Tạo icons cho form đăng nhập
                 }
             } catch (e) {
+                // Xử lý lỗi nếu không kiểm tra được người dùng hiện tại (ví dụ: mất kết nối)
                 console.error("Lỗi kiểm tra đăng nhập:", e); 
                 userId = null;
                 document.getElementById('auth-container').style.display = 'flex'; 
@@ -1020,36 +1108,43 @@
                 document.getElementById('loading-overlay').style.display = 'none'; 
                 lucide.createIcons();
             } finally {
+                // Đảm bảo overlay loading luôn được ẩn nếu không còn loading
                 if (!isLoading && document.getElementById('loading-overlay').style.display !== 'none') {
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
             }
 
+            // Gán sự kiện cho các nút đăng ký, đăng nhập
             document.getElementById('signup-btn').addEventListener('click', handleSignUp);
             document.getElementById('signin-btn').addEventListener('click', handleSignIn);
             
+            // Gán sự kiện cho các nút tab
             ['today', 'my-workouts', 'stats'].forEach(tab => {
                 const btn = document.getElementById(`${tab}-tab-btn`);
                 if(btn) btn.addEventListener('click', () => {
                     currentTab = tab; 
-                    showAddWorkoutFormToday = false; 
+                    showAddWorkoutFormToday = false; // Reset trạng thái form khi chuyển tab
                     showAddWorkoutFormMyWorkouts = false; 
                     renderApp();
                 });
             });
 
+            // Gán sự kiện cho nút đóng modal
             const closeModalButton = document.getElementById('close-workout-detail-modal');
             if(closeModalButton) closeModalButton.addEventListener('click', closeWorkoutDetailsModal);
             
+            // Gán sự kiện đóng modal khi click ra ngoài (vào overlay)
             const modalOverlay = document.getElementById('workout-detail-modal');
             if(modalOverlay) modalOverlay.addEventListener('click', (e) => { 
-                if (e.target === e.currentTarget) closeWorkoutDetailsModal(); 
+                if (e.target === e.currentTarget) closeWorkoutDetailsModal(); // Chỉ đóng nếu click trực tiếp vào overlay
             });
             
+            // Nếu cả app và auth đều ẩn (trường hợp hiếm), vẫn tạo icons
             if(document.getElementById('app-container').style.display === 'none' && document.getElementById('auth-container').style.display === 'none'){
                  lucide.createIcons();
             }
         });
+        // Tạo lại icons khi thay đổi kích thước cửa sổ (để đảm bảo hiển thị đúng)
         window.addEventListener('resize', () => { lucide.createIcons(); }); 
     </script>
 </body>
