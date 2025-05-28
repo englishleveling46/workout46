@@ -56,36 +56,6 @@
             transform: translateY(0);
             opacity: 1;
         }
-        /* Custom style for sets/reps input group */
-        .input-group {
-            display: flex;
-            align-items: center;
-            background-color: #374151; /* gray-700 */
-            border-radius: 0.5rem; /* rounded-lg */
-            overflow: hidden;
-            border: 1px solid #4b5563; /* gray-600 */
-        }
-        .input-group input {
-            flex-grow: 1;
-            background-color: transparent;
-            border: none;
-            text-align: center;
-            padding: 0.5rem 0.75rem;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-        }
-        .input-group button {
-            padding: 0.5rem 0.75rem;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .input-group button:hover {
-            opacity: 0.8;
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white font-inter">
@@ -181,24 +151,24 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="modal-sets-input" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
-                        <div class="input-group">
-                            <button id="sets-decrement-btn" class="bg-red-500 hover:bg-red-600">
+                        <div class="flex items-center space-x-2">
+                            <button id="sets-decrement-btn" class="bg-red-500 hover:bg-red-600 p-2 rounded-lg transition-colors">
                                 <i data-lucide="minus" class="w-4 h-4"></i>
                             </button>
-                            <input type="number" id="modal-sets-input" value="1" min="1" />
-                            <button id="sets-increment-btn" class="bg-green-500 hover:bg-green-600">
+                            <input type="number" id="modal-sets-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <button id="sets-increment-btn" class="bg-green-500 hover:bg-green-600 p-2 rounded-lg transition-colors">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </div>
                     <div>
                         <label for="modal-reps-input" class="block text-sm font-medium text-gray-300 mb-1">Reps</label>
-                        <div class="input-group">
-                            <button id="reps-decrement-btn" class="bg-red-500 hover:bg-red-600">
+                        <div class="flex items-center space-x-2">
+                            <button id="reps-decrement-btn" class="bg-red-500 hover:bg-red-600 p-2 rounded-lg transition-colors">
                                 <i data-lucide="minus" class="w-4 h-4"></i>
                             </button>
-                            <input type="number" id="modal-reps-input" value="1" min="1" />
-                            <button id="reps-increment-btn" class="bg-green-500 hover:bg-green-600">
+                            <input type="number" id="modal-reps-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-center placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <button id="reps-increment-btn" class="bg-green-500 hover:bg-green-600 p-2 rounded-lg transition-colors">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -209,7 +179,7 @@
                 </button>
             </div>
 
-            <h4 id="modal-history-title" class="text-lg font-semibold mb-2">Lịch sử 5 ngày gần nhất:</h4>
+            <h4 class="text-lg font-semibold mb-2">Lịch sử 5 ngày gần nhất:</h4>
             <div id="modal-workout-history" class="space-y-3">
                 </div>
         </div>
@@ -769,7 +739,6 @@
             const modal = document.getElementById('workout-detail-modal');
             const modalWorkoutName = document.getElementById('modal-workout-name');
             const modalWorkoutImageContainer = document.getElementById('modal-workout-image-container');
-            const modalHistoryTitle = document.getElementById('modal-history-title'); // Get history title
             const modalWorkoutHistory = document.getElementById('modal-workout-history');
             const modalSetsRepsEditor = document.getElementById('modal-sets-reps-editor');
             const modalSetsInput = document.getElementById('modal-sets-input');
@@ -790,11 +759,37 @@
             }
             lucide.createIcons(); // Re-render icons if placeholder div is used
 
-            // Conditionally display history and sets/reps editor
-            if (currentWorkoutObjectId) { // From Today tab
+            // Fetch last 5 workout entries for this master_id
+            const queryBuilder = Backendless.DataQueryBuilder.create()
+                .setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`)
+                .setSortBy(['workout_date DESC'])
+                .setPageSize(5);
+
+            try {
+                const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
+                modalWorkoutHistory.innerHTML = ''; // Clear previous history
+
+                if (historyData && historyData.length > 0) {
+                    historyData.forEach(entry => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
+                        historyItem.innerHTML = `
+                            <span class="text-sm font-medium">${formatDate(entry.workout_date)}</span>
+                            <span class="text-sm text-gray-300">${entry.num_sets} sets x ${entry.num_reps} reps</span>
+                        `;
+                        modalWorkoutHistory.appendChild(historyItem);
+                    });
+                } else {
+                    modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử tập luyện cho bài tập này.</p>';
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải lịch sử bài tập:", error);
+                modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi khi tải lịch sử.</p>';
+            }
+
+            // Handle Sets & Reps Editor for "Today" tab
+            if (currentWorkoutObjectId) {
                 modalSetsRepsEditor.style.display = 'block';
-                modalHistoryTitle.style.display = 'none'; // Hide history title
-                modalWorkoutHistory.style.display = 'none'; // Hide history content
 
                 // Find the current workout in the local 'workouts' array
                 const currentWorkout = workouts.find(w => w.objectId === currentWorkoutObjectId);
@@ -857,38 +852,8 @@
                     }
                 };
 
-            } else { // From My Workouts tab
+            } else {
                 modalSetsRepsEditor.style.display = 'none';
-                modalHistoryTitle.style.display = 'block'; // Show history title
-                modalWorkoutHistory.style.display = 'block'; // Show history content
-
-                // Fetch last 5 workout entries for this master_id
-                const historyQueryBuilder = Backendless.DataQueryBuilder.create()
-                    .setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`)
-                    .setSortBy(['workout_date DESC'])
-                    .setPageSize(5);
-
-                try {
-                    const historyData = await Backendless.Data.of('DailyWorkouts').find(historyQueryBuilder);
-                    modalWorkoutHistory.innerHTML = ''; // Clear previous history
-
-                    if (historyData && historyData.length > 0) {
-                        historyData.forEach(entry => {
-                            const historyItem = document.createElement('div');
-                            historyItem.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
-                            historyItem.innerHTML = `
-                                <span class="text-sm font-medium">${formatDate(entry.workout_date)}</span>
-                                <span class="text-sm text-gray-300">${entry.num_sets} sets x ${entry.num_reps} reps</span>
-                            `;
-                            modalWorkoutHistory.appendChild(historyItem);
-                        });
-                    } else {
-                        modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử tập luyện cho bài tập này.</p>';
-                    }
-                } catch (error) {
-                    console.error("Lỗi khi tải lịch sử bài tập:", error);
-                    modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi khi tải lịch sử.</p>';
-                }
             }
 
             modal.classList.add('open');
