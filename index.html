@@ -628,10 +628,7 @@
                             ${workout.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
                         </button>
 
-                        <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger"
-                             data-master-id="${workout.master_id}"
-                             data-workout-name="${workout.name}"
-                             data-image-url="${workout.image_url || ''}">
+                        <div class="flex items-center space-x-3 flex-1">
                             ${workout.image_url ? `
                                 <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
                             ` : `
@@ -666,15 +663,6 @@
             document.querySelectorAll('.remove-workout-btn').forEach(button => {
                 button.onclick = (event) => removeWorkout(event.currentTarget.dataset.id);
             });
-            // Add click listener for workout details popup
-            document.querySelectorAll('.workout-details-trigger').forEach(element => {
-                element.onclick = (event) => {
-                    const masterId = event.currentTarget.dataset.masterId;
-                    const workoutName = event.currentTarget.dataset.workoutName;
-                    const imageUrl = event.currentTarget.dataset.imageUrl;
-                    showWorkoutDetails(masterId, workoutName, imageUrl);
-                };
-            });
             lucide.createIcons();
         }
 
@@ -704,21 +692,19 @@
         async function showWorkoutDetails(masterId, workoutName, imageUrl) {
             const modal = document.getElementById('workout-detail-modal');
             const modalWorkoutName = document.getElementById('modal-workout-name');
-            const modalWorkoutImage = document.getElementById('modal-workout-image');
+            const modalWorkoutImageContainer = document.getElementById('modal-workout-image-container');
             const modalWorkoutHistory = document.getElementById('modal-workout-history');
 
             modalWorkoutName.textContent = workoutName;
-            modalWorkoutImage.src = imageUrl || 'https://placehold.co/400x200/6b7280/ffffff?text=No+Image';
             if (!imageUrl) {
-                // If no image URL, hide the image container or show a placeholder div
-                document.getElementById('modal-workout-image-container').innerHTML = `
+                modalWorkoutImageContainer.innerHTML = `
                     <div class="w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg">
                         <i data-lucide="image" class="w-24 h-24 text-gray-400"></i>
                     </div>
                 `;
             } else {
-                document.getElementById('modal-workout-image-container').innerHTML = `
-                    <img id="modal-workout-image" src="${imageUrl}" alt="Workout Image" class="w-full h-48 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/6b7280/ffffff?text=No+Image';" />
+                modalWorkoutImageContainer.innerHTML = `
+                    <img src="${imageUrl}" alt="Workout Image" class="w-full h-48 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/6b7280/ffffff?text=No+Image';" />
                 `;
             }
             lucide.createIcons(); // Re-render icons if placeholder div is used
@@ -828,7 +814,10 @@
                 const workoutItem = document.createElement('div');
                 workoutItem.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 workoutItem.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
+                    <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger"
+                         data-master-id="${workout.objectId}"
+                         data-workout-name="${workout.name}"
+                         data-image-url="${workout.image_url || ''}">
                         ${workout.image_url ? `
                             <img src="${workout.image_url}" alt="${workout.name}" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/6b7280/ffffff?text=No+Img';" />
                         ` : `
@@ -862,6 +851,15 @@
             });
             document.querySelectorAll('.remove-master-workout-btn').forEach(button => {
                 button.onclick = (event) => removeMasterWorkout(event.currentTarget.dataset.id);
+            });
+            // Add click listener for workout details popup to My Workouts tab
+            document.querySelectorAll('#all-workouts-list-container .workout-details-trigger').forEach(element => {
+                element.onclick = (event) => {
+                    const masterId = event.currentTarget.dataset.masterId;
+                    const workoutName = event.currentTarget.dataset.workoutName;
+                    const imageUrl = event.currentTarget.dataset.imageUrl;
+                    showWorkoutDetails(masterId, workoutName, imageUrl);
+                };
             });
             lucide.createIcons();
         }
