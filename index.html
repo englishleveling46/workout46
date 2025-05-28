@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fitness Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://unpkg.com/backendless/backendless.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -46,7 +46,7 @@
             </div>
             <p class="text-center text-gray-400 text-xs mt-4">
                 Sử dụng email và mật khẩu để đăng nhập hoặc đăng ký.
-            p>
+            </p>
         </div>
     </div>
 
@@ -115,22 +115,12 @@
 
         const MAX_WEEKLY_STATS_DAYS = 30;
 
-        // Supabase configuration
-        const SUPABASE_URL = 'https://ompznhkdqyypuqdptlrh.supabase.co'; // Your Supabase project URL
+        // Backendless configuration
+        const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98';
+        const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA';
 
-        // !!! CRITICAL ERROR: The SUPABASE_ANON_KEY below is INVALID !!!
-        // The 'iat' (issued at) timestamp within this JWT token (1748362945) corresponds to
-        // Fri, 23 May 2025 16:22:25 GMT.
-        // If you are running this code before this date, Supabase will reject the key as "not yet valid",
-        // leading to "AuthApiError: Invalid API key" errors as seen in your console.
-        //
-        // TO FIX: Replace this key with the current, valid "anon" (public) key
-        // from your Supabase project dashboard (Project Settings -> API -> Project API keys).
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcHpuaGtkcXl5cHVxZHB0bHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjI5NDUsImV4cCI6MjA2MzkzODk0NX0.5rhTkiY_AA41RfOVMvvKVaehDWoiIecGcIvZPnloye8'; // Your Supabase anon key
-
-        // Initialize Supabase client
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialize Backendless
+        Backendless.initApp(BACKENDLESS_APP_ID, BACKENDLESS_JS_API_KEY);
 
         let userId = null; // Current authenticated user ID
 
@@ -178,14 +168,14 @@
             }
         }
 
-        // Supabase data handling functions
-        async function loadDataFromSupabase() {
+        // Backendless data handling functions
+        async function loadDataFromBackendless() {
             isLoading = true;
             document.getElementById('loading-overlay').style.display = 'flex';
             lucide.createIcons(); // Show loading icon
 
             if (!userId) {
-                console.warn("User not authenticated. Cannot load data from Supabase.");
+                console.warn("User not authenticated. Cannot load data from Backendless.");
                 isLoading = false;
                 document.getElementById('loading-overlay').style.display = 'none';
                 return;
@@ -193,53 +183,41 @@
 
             try {
                 // Load daily workouts for today
-                const { data: dailyWorkoutsData, error: dailyWorkoutsError } = await supabaseClient
-                    .from('daily_workouts')
-                    .select('*, num_sets, num_reps, volume') // Select new fields
-                    .eq('user_id', userId)
-                    .eq('workout_date', getTodayDateString());
-
-                if (dailyWorkoutsError) throw dailyWorkoutsError;
+                const dailyWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create()
+                    .setWhereClause(`ownerId = '${userId}' AND workout_date = '${getTodayDateString()}'`);
+                const dailyWorkoutsData = await Backendless.Data.of('DailyWorkouts').find(dailyWorkoutsQueryBuilder);
                 workouts = dailyWorkoutsData || [];
                 console.log("Daily workouts loaded:", workouts);
 
-                // Load all master workouts
-                const { data: allWorkoutsData, error: allWorkoutsError } = await supabaseClient
-                    .from('all_workouts')
-                    .select('*, num_sets, num_reps'); // Select new fields
-
-                if (allWorkoutsError) throw allWorkoutsError;
+                // Load all master workouts (assuming all_workouts is public or accessible to all authenticated users)
+                const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create();
+                const allWorkoutsData = await Backendless.Data.of('AllWorkouts').find(allWorkoutsQueryBuilder);
                 allWorkouts = allWorkoutsData || [];
                 console.log("All master workouts loaded:", allWorkouts);
 
                 // Load user stats
-                const { data: userStatsData, error: userStatsError } = await supabaseClient
-                    .from('user_stats')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .single(); // Expect only one row per user
+                const userStatsQueryBuilder = Backendless.DataQueryBuilder.create()
+                    .setWhereClause(`ownerId = '${userId}'`);
+                const userStatsData = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
 
-                if (userStatsError && userStatsError.code !== 'PGRST116') { // PGRST116 means no rows found (no data for this user yet)
-                    throw userStatsError;
-                }
-
-                if (userStatsData) {
-                    streak = userStatsData.streak || 0;
-                    totalWorkouts = userStatsData.total_workouts || 0;
-                    weeklyStats = userStatsData.weekly_stats || [];
-                    streakLastAchievedDate = userStatsData.streak_last_achieved_date;
+                if (userStatsData && userStatsData.length > 0) {
+                    const userStats = userStatsData[0];
+                    streak = userStats.streak || 0;
+                    totalWorkouts = userStats.total_workouts || 0;
+                    weeklyStats = userStats.weekly_stats ? JSON.parse(userStats.weekly_stats) : []; // Parse JSON string
+                    streakLastAchievedDate = userStats.streak_last_achieved_date;
                     console.log("User stats loaded:", { streak, totalWorkouts, weeklyStats, streakLastAchievedDate });
                 } else {
                     // If no user stats, initialize them
-                    const { error: insertError } = await supabaseClient.from('user_stats').insert({ user_id: userId, streak: 0, total_workouts: 0, weekly_stats: [] });
-                    if (insertError) throw insertError;
+                    const newUserStats = { ownerId: userId, streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]) };
+                    await Backendless.Data.of('UserStats').save(newUserStats);
                     console.log("New user stats initialized.");
                 }
 
-                showMessage("Dữ liệu đã được tải từ Supabase!", "success");
+                showMessage("Dữ liệu đã được tải từ Backendless!", "success");
 
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu từ Supabase:", error);
+                console.error("Lỗi khi tải dữ liệu từ Backendless:", error);
                 showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Ứng dụng sẽ khởi động với dữ liệu trống.`, "error");
                 // Fallback to empty state if fetch fails
                 workouts = [];
@@ -256,9 +234,9 @@
 
         // This function is primarily for saving user stats and master workouts.
         // Daily workout changes are handled by their specific functions (add, toggle, delete).
-        async function saveDataToSupabase() {
+        async function saveDataToBackendless() {
             if (!userId) {
-                console.warn("User not authenticated. Cannot save data to Supabase.");
+                console.warn("User not authenticated. Cannot save data to Backendless.");
                 showMessage("Lỗi: Bạn cần đăng nhập để lưu dữ liệu.", "error");
                 return;
             }
@@ -272,24 +250,29 @@
                 }
 
                 // Save user stats
-                const userStatsToSave = {
-                    user_id: userId,
+                const userStatsQueryBuilder = Backendless.DataQueryBuilder.create()
+                    .setWhereClause(`ownerId = '${userId}'`);
+                const existingUserStats = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
+
+                let userStatsToSave = {
                     streak: streak,
                     total_workouts: totalWorkouts,
-                    weekly_stats: weeklyStats, // JSONB will handle array/object
+                    weekly_stats: JSON.stringify(weeklyStats), // Stringify array for Backendless
                     streak_last_achieved_date: streakLastAchievedDate
                 };
 
-                const { error: userStatsUpsertError } = await supabaseClient
-                    .from('user_stats')
-                    .upsert(userStatsToSave, { onConflict: 'user_id' }); // Conflict on 'user_id'
+                if (existingUserStats && existingUserStats.length > 0) {
+                    userStatsToSave.objectId = existingUserStats[0].objectId; // Update existing object
+                } else {
+                    userStatsToSave.ownerId = userId; // Create new object
+                }
 
-                if (userStatsUpsertError) throw userStatsUpsertError;
+                await Backendless.Data.of('UserStats').save(userStatsToSave);
 
-                showMessage("Dữ liệu đã được lưu thành công vào Supabase!", "success");
+                showMessage("Dữ liệu đã được lưu thành công vào Backendless!", "success");
 
             } catch (error) {
-                console.error("Lỗi khi gửi dữ liệu đến Supabase:", error);
+                console.error("Lỗi khi gửi dữ liệu đến Backendless:", error);
                 showMessage(`Lỗi khi lưu dữ liệu: ${error.message}. Vui lòng kiểm tra console để biết chi tiết.`, "error");
             } finally {
                 const saveButton = document.getElementById('save-data-to-sheet-btn');
@@ -375,7 +358,7 @@
             if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) {
                 weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
             }
-            saveDataToSupabase(); // Save to Supabase (mainly user stats)
+            saveDataToBackendless(); // Save to Backendless (mainly user stats)
         }
 
         // Helper functions (for UI display)
@@ -536,7 +519,7 @@
                 showAddWorkoutFormToday = true;
                 renderApp();
             };
-            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToSupabase; // Changed to Supabase save
+            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; // Changed to Backendless save
 
             if (showAddWorkoutFormToday) {
                 document.getElementById('close-add-form-today-btn').onclick = () => {
@@ -588,7 +571,7 @@
 
                 workoutItem.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1">
-                        <button class="toggle-workout-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${workout.id}">
+                        <button class="toggle-workout-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${workout.objectId}">
                             ${workout.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
                         </button>
 
@@ -612,7 +595,7 @@
                             <p class="text-gray-400 text-xs mt-1">${workout.num_sets} sets x ${workout.num_reps} reps</p>
                         </div>
                     </div>
-                    <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.id}">
+                    <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.objectId}">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 `;
@@ -630,19 +613,12 @@
 
         async function getPreviousWorkoutPerformance(masterId, currentVolume) {
             // Find the most recent previous workout for this master_id, excluding today
-            const { data, error } = await supabaseClient
-                .from('daily_workouts')
-                .select('volume, workout_date')
-                .eq('user_id', userId)
-                .eq('master_id', masterId)
-                .lt('workout_date', getTodayDateString()) // Less than today's date
-                .order('workout_date', { ascending: false }) // Most recent first
-                .limit(1);
+            const queryBuilder = Backendless.DataQueryBuilder.create()
+                .setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}' AND workout_date < '${getTodayDateString()}'`)
+                .setSortBy(['workout_date DESC'])
+                .setPageSize(1);
 
-            if (error) {
-                console.error("Error fetching previous workout performance:", error);
-                return 'error';
-            }
+            const data = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
 
             if (data && data.length > 0) {
                 const previousVolume = data[0].volume;
@@ -744,10 +720,10 @@
                         </div>
                     </div>
                     <div class="flex space-x-2 ml-2 flex-shrink-0">
-                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg text-xs transition-colors" data-id="${workout.id}">
+                        <button class="add-to-today-btn bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg text-xs transition-colors" data-id="${workout.objectId}">
                             Thêm vào hôm nay
                         </button>
-                        <button class="remove-master-workout-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${workout.id}">
+                        <button class="remove-master-workout-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${workout.objectId}">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -825,7 +801,7 @@
                                 </div>
                                 <span class="text-sm font-bold text-green-400">${getMostActiveDay()}</span>
                             </div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg">
                                 <div class="flex items-center space-x-3">
                                     <div class="p-2 bg-blue-500/20 rounded-lg">
                                         <i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i>
@@ -913,27 +889,23 @@
         }
 
         // Workout management functions (Logic)
-        async function toggleWorkout(id) {
-            const workoutIndex = workouts.findIndex(w => w.id === id);
+        async function toggleWorkout(objectId) {
+            const workoutIndex = workouts.findIndex(w => w.objectId === objectId);
             if (workoutIndex > -1) {
                 const newCompletedStatus = !workouts[workoutIndex].completed;
                 workouts[workoutIndex].completed = newCompletedStatus;
 
-                // Update in Supabase
-                const { error } = await supabaseClient
-                    .from('daily_workouts')
-                    .update({ completed: newCompletedStatus })
-                    .eq('id', id)
-                    .eq('user_id', userId); // Ensure user_id for RLS
-
-                if (error) {
-                    console.error("Lỗi khi cập nhật trạng thái bài tập:", error);
-                    showMessage("Lỗi khi cập nhật trạng thái bài tập.", "error");
-                    // Revert local state if Supabase update fails
-                    workouts[workoutIndex].completed = !newCompletedStatus;
-                } else {
+                // Update in Backendless
+                const workoutToUpdate = { objectId: objectId, completed: newCompletedStatus };
+                try {
+                    await Backendless.Data.of('DailyWorkouts').save(workoutToUpdate);
                     updateCurrentDayWeeklyStat();
                     renderApp();
+                } catch (error) {
+                    console.error("Lỗi khi cập nhật trạng thái bài tập:", error);
+                    showMessage("Lỗi khi cập nhật trạng thái bài tập.", "error");
+                    // Revert local state if Backendless update fails
+                    workouts[workoutIndex].completed = !newCompletedStatus;
                 }
             }
         }
@@ -942,12 +914,12 @@
         async function addNewWorkoutFromTodayTab() {
             const nameInput = document.getElementById('new-workout-name-today');
             const setsInput = document.getElementById('new-workout-sets-today');
-            const repsInput = document.getElementById('new-workout-reps-today'); // New rep input
+            const repsInput = document.getElementById('new-workout-reps-today');
             const imageUrlInput = document.getElementById('new-workout-image-url-today');
 
             const name = nameInput.value.trim();
-            const num_sets = parseInt(setsInput.value.trim()); // Parse to integer
-            const num_reps = parseInt(repsInput.value.trim()); // Parse to integer
+            const num_sets = parseInt(setsInput.value.trim());
+            const num_reps = parseInt(repsInput.value.trim());
             const image_url = imageUrlInput.value.trim();
 
             if (!name || isNaN(num_sets) || isNaN(num_reps) || num_sets <= 0 || num_reps <= 0) {
@@ -958,11 +930,11 @@
             const volume = num_sets * num_reps;
 
             // Add to master workouts if not already exists
-            let masterWorkoutId;
+            let masterWorkoutObjectId;
             const existingMasterWorkout = allWorkouts.find(w => w.name === name && w.num_sets === num_sets && w.num_reps === num_reps);
 
             if (existingMasterWorkout) {
-                masterWorkoutId = existingMasterWorkout.id;
+                masterWorkoutObjectId = existingMasterWorkout.objectId;
             } else {
                 const newMasterWorkoutPayload = {
                     name: name,
@@ -970,24 +942,21 @@
                     num_reps: num_reps,
                     image_url: image_url
                 };
-                const { data, error } = await supabaseClient
-                    .from('all_workouts')
-                    .insert(newMasterWorkoutPayload)
-                    .select(); // Select to get the newly created ID
-
-                if (error) {
+                try {
+                    const savedMasterWorkout = await Backendless.Data.of('AllWorkouts').save(newMasterWorkoutPayload);
+                    masterWorkoutObjectId = savedMasterWorkout.objectId;
+                    allWorkouts.push(savedMasterWorkout); // Add to local state
+                } catch (error) {
                     console.error("Lỗi khi thêm bài tập chính mới:", error);
                     showMessage("Lỗi khi thêm bài tập chính.", "error");
                     return;
                 }
-                masterWorkoutId = data[0].id;
-                allWorkouts.push(data[0]); // Add to local state
             }
 
             // Add to daily workouts
             const dailyWorkoutPayload = {
-                master_id: masterWorkoutId,
-                user_id: userId,
+                master_id: masterWorkoutObjectId,
+                ownerId: userId, // Set ownerId for RLS
                 name: name,
                 num_sets: num_sets,
                 num_reps: num_reps,
@@ -997,35 +966,30 @@
                 workout_date: getTodayDateString()
             };
 
-            const { data: newDailyWorkoutData, error: dailyWorkoutError } = await supabaseClient
-                .from('daily_workouts')
-                .insert(dailyWorkoutPayload)
-                .select();
+            try {
+                const newDailyWorkout = await Backendless.Data.of('DailyWorkouts').save(dailyWorkoutPayload);
+                workouts.push(newDailyWorkout); // Add to local state
+                totalWorkouts++;
+                updateCurrentDayWeeklyStat();
+                showMessage("Đã thêm bài tập vào hôm nay!", "success");
 
-            if (dailyWorkoutError) {
-                console.error("Lỗi khi thêm bài tập hàng ngày:", dailyWorkoutError);
+                nameInput.value = '';
+                setsInput.value = '';
+                repsInput.value = '';
+                imageUrlInput.value = '';
+                showAddWorkoutFormToday = false;
+                renderApp();
+            } catch (error) {
+                console.error("Lỗi khi thêm bài tập hàng ngày:", error);
                 showMessage("Lỗi khi thêm bài tập vào hôm nay.", "error");
-                return;
             }
-
-            workouts.push(newDailyWorkoutData[0]); // Add to local state
-            totalWorkouts++;
-            updateCurrentDayWeeklyStat();
-            showMessage("Đã thêm bài tập vào hôm nay!", "success");
-
-            nameInput.value = '';
-            setsInput.value = '';
-            repsInput.value = '';
-            imageUrlInput.value = '';
-            showAddWorkoutFormToday = false;
-            renderApp();
         }
 
         // Function to add new workout from "My Workouts" tab
         async function addNewWorkoutFromMyWorkoutsTab() {
             const nameInput = document.getElementById('new-workout-name-my-workouts');
             const setsInput = document.getElementById('new-workout-sets-my-workouts');
-            const repsInput = document.getElementById('new-workout-reps-my-workouts'); // New rep input
+            const repsInput = document.getElementById('new-workout-reps-my-workouts');
             const imageUrlInput = document.getElementById('new-workout-image-url-my-workouts');
 
             const name = nameInput.value.trim();
@@ -1051,37 +1015,32 @@
                 image_url: image_url
             };
 
-            const { data, error } = await supabaseClient
-                .from('all_workouts')
-                .insert(newMasterWorkoutPayload)
-                .select();
+            try {
+                const savedMasterWorkout = await Backendless.Data.of('AllWorkouts').save(newMasterWorkoutPayload);
+                allWorkouts.push(savedMasterWorkout); // Add to local state
+                showMessage("Đã thêm bài tập vào danh sách chính!", "success");
 
-            if (error) {
+                nameInput.value = '';
+                setsInput.value = '';
+                repsInput.value = '';
+                imageUrlInput.value = '';
+                showAddWorkoutFormMyWorkouts = false;
+                renderApp();
+            } catch (error) {
                 console.error("Lỗi khi thêm bài tập chính mới:", error);
                 showMessage("Lỗi khi thêm bài tập chính.", "error");
-                return;
             }
-
-            allWorkouts.push(data[0]); // Add to local state
-            showMessage("Đã thêm bài tập vào danh sách chính!", "success");
-
-            nameInput.value = '';
-            setsInput.value = '';
-            repsInput.value = '';
-            imageUrlInput.value = '';
-            showAddWorkoutFormMyWorkouts = false;
-            renderApp();
         }
 
         // Function to add a workout from the master list to today's list
-        async function addSelectedWorkoutToToday(masterWorkoutId) {
-            const workoutToAdd = allWorkouts.find(w => w.id === masterWorkoutId);
+        async function addSelectedWorkoutToToday(masterWorkoutObjectId) {
+            const workoutToAdd = allWorkouts.find(w => w.objectId === masterWorkoutObjectId);
             if (workoutToAdd) {
                 // Check if this workout is already in today's list (based on masterId)
-                if (!workouts.some(w => w.master_id === masterWorkoutId && w.workout_date === getTodayDateString())) {
+                if (!workouts.some(w => w.master_id === masterWorkoutObjectId && w.workout_date === getTodayDateString())) {
                     const dailyWorkoutPayload = {
-                        master_id: masterWorkoutId,
-                        user_id: userId,
+                        master_id: masterWorkoutObjectId,
+                        ownerId: userId, // Set ownerId for RLS
                         name: workoutToAdd.name,
                         num_sets: workoutToAdd.num_sets,
                         num_reps: workoutToAdd.num_reps,
@@ -1091,63 +1050,50 @@
                         workout_date: getTodayDateString()
                     };
 
-                    const { data, error } = await supabaseClient
-                        .from('daily_workouts')
-                        .insert(dailyWorkoutPayload)
-                        .select();
-
-                    if (error) {
+                    try {
+                        const newDailyWorkout = await Backendless.Data.of('DailyWorkouts').save(dailyWorkoutPayload);
+                        workouts.push(newDailyWorkout); // Add to local state
+                        totalWorkouts++;
+                        updateCurrentDayWeeklyStat();
+                        showMessage("Đã thêm bài tập vào danh sách hôm nay!", "success");
+                        renderApp();
+                    } catch (error) {
                         console.error("Lỗi khi thêm bài tập đã chọn vào hôm nay:", error);
                         showMessage("Lỗi khi thêm bài tập vào hôm nay.", "error");
-                        return;
                     }
-
-                    workouts.push(data[0]); // Add to local state
-                    totalWorkouts++;
-                    updateCurrentDayWeeklyStat();
-                    showMessage("Đã thêm bài tập vào danh sách hôm nay!", "success");
-                    renderApp();
                 } else {
                     showMessage("Bài tập này đã có trong danh sách hôm nay!", "info");
                 }
             }
         }
 
-        async function removeWorkout(id) {
-            const { error } = await supabaseClient
-                .from('daily_workouts')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', userId); // Ensure user_id for RLS
-
-            if (error) {
-                console.error("Lỗi khi xóa bài tập hàng ngày:", error);
-                showMessage("Lỗi khi xóa bài tập hôm nay.", "error");
-            } else {
-                workouts = workouts.filter(workout => workout.id !== id);
+        async function removeWorkout(objectId) {
+            try {
+                // Backendless remove by objectId
+                await Backendless.Data.of('DailyWorkouts').remove({ objectId: objectId });
+                workouts = workouts.filter(workout => workout.objectId !== objectId);
                 updateCurrentDayWeeklyStat();
                 showMessage("Bài tập đã được xóa khỏi hôm nay.", "success");
                 renderApp();
+            } catch (error) {
+                console.error("Lỗi khi xóa bài tập hàng ngày:", error);
+                showMessage("Lỗi khi xóa bài tập hôm nay.", "error");
             }
         }
 
         // Function to remove workout from master list
-        async function removeMasterWorkout(id) {
-            const { error } = await supabaseClient
-                .from('all_workouts')
-                .delete()
-                .eq('id', id); // Note: RLS for all_workouts might allow more if it's a shared list
-
-            if (error) {
-                console.error("Lỗi khi xóa bài tập chính:", error);
-                showMessage("Lỗi khi xóa bài tập khỏi danh sách chính.", "error");
-            } else {
-                allWorkouts = allWorkouts.filter(workout => workout.id !== id);
+        async function removeMasterWorkout(objectId) {
+            try {
+                await Backendless.Data.of('AllWorkouts').remove({ objectId: objectId });
+                allWorkouts = allWorkouts.filter(workout => workout.objectId !== objectId);
                 // Also remove from daily workouts if it's based on this master workout
-                workouts = workouts.filter(workout => workout.master_id !== id);
+                workouts = workouts.filter(workout => workout.master_id !== objectId);
                 updateCurrentDayWeeklyStat();
                 showMessage("Bài tập đã được xóa khỏi danh sách chính.", "success");
                 renderApp();
+            } catch (error) {
+                console.error("Lỗi khi xóa bài tập chính:", error);
+                showMessage("Lỗi khi xóa bài tập khỏi danh sách chính.", "error");
             }
         }
 
@@ -1155,27 +1101,35 @@
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
-            if (error) {
+            const user = new Backendless.User();
+            user.email = email;
+            user.password = password;
+
+            try {
+                await Backendless.UserService.register(user);
+                showMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.", "success");
+            } catch (error) {
                 showMessage(`Đăng ký thất bại: ${error.message}`, "error");
                 console.error("Lỗi đăng ký:", error);
-            } else {
-                showMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.", "success");
-                console.log("Đăng ký thành công:", data);
             }
         }
 
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
+            try {
+                const loggedInUser = await Backendless.UserService.login(email, password, true); // true for stay logged in
+                userId = loggedInUser.objectId;
+                showMessage("Đăng nhập thành công!", "success");
+                // Backendless.UserService.getCurrentUser() will be called in DOMContentLoaded to handle app display
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                await loadDataFromBackendless();
+                initializeAppAndHandleDailyRollover();
+                renderApp();
+            } catch (error) {
                 showMessage(`Đăng nhập thất bại: ${error.message}`, "error");
                 console.error("Lỗi đăng nhập:", error);
-            } else {
-                showMessage("Đăng nhập thành công!", "success");
-                console.log("Đăng nhập thành công:", data);
-                // Supabase's onAuthStateChange will handle app display
             }
         }
 
@@ -1184,35 +1138,26 @@
             updateLiveDateTime();
             setInterval(updateLiveDateTime, 1000);
 
-            // Handle authentication state changes
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (session && session.user) {
-                    userId = session.user.id;
+            try {
+                const currentUser = await Backendless.UserService.getCurrentUser();
+                if (currentUser) {
+                    userId = currentUser.objectId;
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('app-container').style.display = 'block';
-                    await loadDataFromSupabase();
+                    await loadDataFromBackendless();
                     initializeAppAndHandleDailyRollover();
                     renderApp();
                 } else {
                     userId = null;
                     document.getElementById('auth-container').style.display = 'flex';
                     document.getElementById('app-container').style.display = 'none';
-                    isLoading = false; // Ensure loading overlay is hidden if not authenticated
+                    isLoading = false;
                     document.getElementById('loading-overlay').style.display = 'none';
-                    lucide.createIcons(); // Show icons on auth page
+                    lucide.createIcons();
                 }
-            });
-
-            // Check initial session
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                userId = session.user.id;
-                document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-                await loadDataFromSupabase();
-                initializeAppAndHandleDailyRollover();
-                renderApp();
-            } else {
+            } catch (error) {
+                console.error("Lỗi khi kiểm tra trạng thái đăng nhập Backendless:", error);
+                userId = null;
                 document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('app-container').style.display = 'none';
                 isLoading = false;
