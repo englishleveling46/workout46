@@ -10,7 +10,6 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            padding-bottom: 4rem; /* Khoảng cách cho bottom nav bar */
         }
         /* Custom styles for Lucide icons to ensure they are rendered */
         [data-lucide] {
@@ -58,40 +57,42 @@
             opacity: 1;
         }
 
-        /* Bottom Navigation Bar */
+        /* Bottom navigation bar styles */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            backdrop-filter: blur(10px); /* Blur effect */
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 100;
             display: flex;
             justify-content: space-around;
             padding: 0.5rem 0;
         }
-        .bottom-nav-item {
+        .bottom-nav-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-center: center;
+            justify-content: center;
             flex: 1;
-            padding: 0.5rem;
+            padding: 0.75rem 0.5rem;
             color: #9ca3af; /* gray-400 */
-            transition: all 0.2s ease;
-            border-radius: 0.5rem;
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            transition: color 0.2s ease, background-color 0.2s ease;
+            border-radius: 0.5rem; /* rounded-lg */
         }
-        .bottom-nav-item.active {
+        .bottom-nav-btn.active {
             color: #fff;
             background-color: rgba(168, 85, 247, 0.2); /* purple-500/20 */
         }
-        .bottom-nav-item:hover:not(.active) {
-            color: #d1d5db; /* gray-300 */
-            background-color: rgba(255, 255, 255, 0.05);
+        .bottom-nav-btn:hover:not(.active) {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1); /* white/10 */
         }
-        .bottom-nav-item i {
+        .bottom-nav-btn i {
             margin-bottom: 0.25rem;
         }
     </style>
@@ -137,7 +138,7 @@
                             <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                                 Fitness Tracker
                             </h1>
-                            <p class="text-xs text-gray-400">Theo dõi tập luyện hàng ngày</p>
+                            <p class="text-xs text-gray-400">Theo dõi tập luyện và thói quen hàng ngày</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -145,23 +146,26 @@
                         <div class="text-xs text-gray-400">Thời gian hiện tại</div>
                     </div>
                 </div>
-
-                <div id="workout-tabs" class="flex bg-gray-800/50 rounded-xl p-1" style="display: none;">
-                    <button id="today-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
-                        Hôm nay
-                    </button>
-                    <button id="my-workouts-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
-                        Bài tập của tôi
-                    </button>
-                    <button id="stats-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
-                        Thống kê
-                    </button>
-                </div>
             </div>
         </div>
 
         <div id="main-content" class="px-4 py-4 pb-20">
             </div>
+
+        <div class="bottom-nav">
+            <button id="workout-tab-btn" class="bottom-nav-btn active">
+                <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                <span>Bài tập</span>
+            </button>
+            <button id="habit-tab-btn" class="bottom-nav-btn">
+                <i data-lucide="check-square" class="w-5 h-5"></i>
+                <span>Thói quen</span>
+            </button>
+            <button id="stats-tab-btn" class="bottom-nav-btn">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                <span>Thống kê</span>
+            </button>
+        </div>
 
         <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" style="display: none;">
             <div class="text-center">
@@ -239,17 +243,6 @@
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <button id="nav-workout-btn" class="bottom-nav-item active">
-            <i data-lucide="dumbbell" class="w-5 h-5"></i>
-            <span class="text-xs">Bài tập</span>
-        </button>
-        <button id="nav-habit-btn" class="bottom-nav-item">
-            <i data-lucide="check-square" class="w-5 h-5"></i>
-            <span class="text-xs">Thói quen</span>
-        </button>
-    </div>
-
     <script>
         // Global state variables
         let workouts = []; // Daily workouts
@@ -259,21 +252,24 @@
         let streak = 0; // Workout streak
         let totalWorkouts = 0; // Total completed workouts
         let weeklyStats = []; // Weekly workout stats
-        let currentMainTab = 'workout'; // Main tab: 'workout' or 'habit'
-        let currentWorkoutSubTab = 'today'; // Sub-tab for workouts: 'today', 'my-workouts', 'stats'
+        let habitStreak = 0; // Habit streak
+        let totalHabitsCompleted = 0; // Total completed habits
+        let weeklyHabitStats = []; // Weekly habit stats
+
+        let currentTab = 'workout'; // Current selected tab (changed from 'today' to 'workout')
         let showAddWorkoutFormToday = false; // Show add workout form in 'Today' tab
         let showAddWorkoutFormMyWorkouts = false; // Show add workout form in 'My Workouts' tab
-        let showAddHabitForm = false; // Show add habit form in 'Habit' tab
+        let showAddHabitFormToday = false; // Show add habit form in 'Habit' tab
         let isLoading = true; // Loading state
 
         let currentDayString = new Date().toISOString().split('T')[0]; // Current date in YYYY-MM-DD format
         let streakLastAchievedDate = null; // Last date workout streak was achieved
+        let habitStreakLastAchievedDate = null; // Last date habit streak was achieved
 
         const MAX_WEEKLY_STATS_DAYS = 30; // Max days to store in weekly stats
         const MODAL_WEIGHT_ADJUST_STEP = 2.5; // Weight adjustment step in modal
 
-
-        // Backendless Keys - REPLACE WITH YOUR KEYS
+        // Backendless keys - REPLACE WITH YOUR KEYS
         const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98'; 
         const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA'; 
 
@@ -348,8 +344,6 @@
 
                 // Load master list of all workouts
                 const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create(); 
-                // If AllWorkouts are user-specific, add: .setWhereClause(`ownerId = '${userId}'`) 
-                // This example assumes AllWorkouts are common, or you'd add ownerId when creating them.
                 const allWorkoutsData = await Backendless.Data.of('AllWorkouts').find(allWorkoutsQueryBuilder);
                 allWorkouts = allWorkoutsData || [];
 
@@ -375,16 +369,26 @@
                     totalWorkouts = userStats.total_workouts || 0;
                     weeklyStats = userStats.weekly_stats ? JSON.parse(userStats.weekly_stats) : [];
                     streakLastAchievedDate = userStats.streak_last_achieved_date;
+                    
+                    habitStreak = userStats.habit_streak || 0;
+                    totalHabitsCompleted = userStats.total_habits_completed || 0;
+                    weeklyHabitStats = userStats.weekly_habit_stats ? JSON.parse(userStats.weekly_habit_stats) : [];
+                    habitStreakLastAchievedDate = userStats.habit_streak_last_achieved_date;
                 } else {
                     // If no stats, create new
-                    const newUserStats = { ownerId: userId, streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]) };
+                    const newUserStats = { 
+                        ownerId: userId, 
+                        streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]),
+                        habit_streak: 0, total_habits_completed: 0, weekly_habit_stats: JSON.stringify([])
+                    };
                     await Backendless.Data.of('UserStats').save(newUserStats);
                 }
             } catch (error) {
                 console.error("Error loading data from Backendless:", error);
                 showMessage(`Error loading data: ${error.message}. Please try again.`, "error");
-                // Reset to default state on error
-                workouts = []; allWorkouts = []; habits = []; allHabits = []; streak = 0; totalWorkouts = 0; weeklyStats = []; streakLastAchievedDate = null;
+                // Reset to default state if error occurs
+                workouts = []; allWorkouts = []; streak = 0; totalWorkouts = 0; weeklyStats = []; streakLastAchievedDate = null;
+                habits = []; allHabits = []; habitStreak = 0; totalHabitsCompleted = 0; weeklyHabitStats = []; habitStreakLastAchievedDate = null;
             } finally {
                 isLoading = false;
                 document.getElementById('loading-overlay').style.display = 'none';
@@ -400,7 +404,7 @@
             const saveButton = document.getElementById('save-data-to-sheet-btn'); // Assuming this button exists
             const originalButtonHtml = saveButton ? saveButton.innerHTML : '';
             if (saveButton) {
-                saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Đang lưu...</span>';
+                saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Saving...</span>';
                 saveButton.disabled = true;
                 lucide.createIcons();
             }
@@ -411,7 +415,10 @@
                 let userStatsToSave = {
                     streak: streak, total_workouts: totalWorkouts,
                     weekly_stats: JSON.stringify(weeklyStats), // Convert array to JSON string
-                    streak_last_achieved_date: streakLastAchievedDate
+                    streak_last_achieved_date: streakLastAchievedDate,
+                    habit_streak: habitStreak, total_habits_completed: totalHabitsCompleted,
+                    weekly_habit_stats: JSON.stringify(weeklyHabitStats), // Convert array to JSON string
+                    habit_streak_last_achieved_date: habitStreakLastAchievedDate
                 };
                 if (existingUserStats && existingUserStats.length > 0) {
                     userStatsToSave.objectId = existingUserStats[0].objectId; // Update existing record
@@ -419,13 +426,13 @@
                     userStatsToSave.ownerId = userId; // Create new record if none exists
                 }
                 await Backendless.Data.of('UserStats').save(userStatsToSave);
-                if (saveButton) showMessage("Statistical data has been saved!", "success");
+                if (saveButton) showMessage("Stats data saved!", "success");
             } catch (error) {
                 console.error("Error sending UserStats to Backendless:", error);
-                showMessage(`Error saving statistical data: ${error.message}.`, "error");
+                showMessage(`Error saving stats data: ${error.message}.`, "error");
             } finally {
                 if (saveButton) {
-                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Lưu dữ liệu</span>'; // Restore button
+                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Save data</span>'; // Restore button
                     saveButton.disabled = false;
                     lucide.createIcons();
                 }
@@ -436,23 +443,23 @@
         function initializeAppAndHandleDailyRollover() {
             const todayStr = getTodayDateString();
             if (currentDayString !== todayStr) { // If a new day has passed
-                // Calculate metrics for the old day (currentDayString)
-                const pastDayActualCompletions = workouts.filter(w => w.completed).length;
-                const pastDayTotalTasks = workouts.length;
+                // Calculate old day's workout stats
+                const pastDayWorkoutCompletions = workouts.filter(w => w.completed).length;
+                const pastDayTotalWorkouts = workouts.length;
 
-                // Find if the old day already exists in weeklyStats
-                const lastDayStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+                // Find if old day already exists in weeklyStats
+                const lastDayWorkoutStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
 
-                // If the old day is yesterday relative to the current day (todayStr)
-                if (lastDayStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
-                    // Update metrics for yesterday if it already exists
-                    weeklyStats[lastDayStatIndex].total = pastDayTotalTasks;
-                    weeklyStats[lastDayStatIndex].completed = pastDayActualCompletions;
-                    weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name); // Save names of completed exercises
-                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // If not yesterday, but has data, add new
+                // If old day is yesterday of current day (todayStr)
+                if (lastDayWorkoutStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
+                    // Update stats for yesterday if it exists
+                    weeklyStats[lastDayWorkoutStatIndex].total = pastDayTotalWorkouts;
+                    weeklyStats[lastDayWorkoutStatIndex].completed = pastDayWorkoutCompletions;
+                    weeklyStats[lastDayWorkoutStatIndex].exercises = workouts.map(w => w.name); // Save names of completed workouts
+                } else if (pastDayTotalWorkouts > 0 || pastDayWorkoutCompletions > 0) { // If not yesterday, but has data, add new
                      weeklyStats.push({
-                        date: currentDayString, total: pastDayTotalTasks,
-                        completed: pastDayActualCompletions, exercises: workouts.map(w => w.name)
+                        date: currentDayString, total: pastDayTotalWorkouts,
+                        completed: pastDayWorkoutCompletions, exercises: workouts.map(w => w.name)
                     });
                 }
 
@@ -460,150 +467,286 @@
                 weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
                 if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
 
-                // Update streak
-                if (pastDayTotalTasks > 0 && pastDayActualCompletions === pastDayTotalTasks) { // All workouts completed for the old day
+                // Update workout streak
+                if (pastDayTotalWorkouts > 0 && pastDayWorkoutCompletions === pastDayTotalWorkouts) { // All workouts completed on old day
                     if (streakLastAchievedDate) {
                         const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Expected previous streak date
                         if (streakLastAchievedDate === expectedPrevStreakDate) streak++; else streak = 1; // Reset streak if not consecutive
                     } else streak = 1; // Start new streak
-                    streakLastAchievedDate = currentDayString; // Save streak date
+                    streakLastAchievedDate = currentDayString; // Save streak achievement date
                 } else {
-                    // If old day was yesterday and not all completed, reset streak
+                    // If old day is yesterday and not all completed, reset streak
                     const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
-                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { // Only reset if there were workouts yesterday
+                    if (currentDayString === yesterdayStr && pastDayTotalWorkouts > 0) { // Only reset if there were workouts yesterday
                         streak = 0; 
                         streakLastAchievedDate = null; // Reset streak date
                     }
-                    // If not yesterday, do nothing with streak (avoid unnecessary reset)
+                    // If not yesterday, do nothing with streak (avoid accidental reset)
                 }
-                workouts = []; // Reset workouts for the new day
-                currentDayString = todayStr; // Update current day
+
+                // Calculate old day's habit stats
+                const pastDayHabitCompletions = habits.filter(h => h.completed).length;
+                const pastDayTotalHabits = habits.length;
+
+                // Find if old day already exists in weeklyHabitStats
+                const lastDayHabitStatIndex = weeklyHabitStats.findIndex(s => s.date === currentDayString);
+
+                // If old day is yesterday of current day (todayStr)
+                if (lastDayHabitStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
+                    // Update stats for yesterday if it exists
+                    weeklyHabitStats[lastDayHabitStatIndex].total = pastDayTotalHabits;
+                    weeklyHabitStats[lastDayHabitStatIndex].completed = pastDayHabitCompletions;
+                    weeklyHabitStats[lastDayHabitStatIndex].habits = habits.map(h => h.name); // Save names of completed habits
+                } else if (pastDayTotalHabits > 0 || pastDayHabitCompletions > 0) { // If not yesterday, but has data, add new
+                     weeklyHabitStats.push({
+                        date: currentDayString, total: pastDayTotalHabits,
+                        completed: pastDayHabitCompletions, habits: habits.map(h => h.name)
+                    });
+                }
+
+                // Sort weeklyHabitStats by date descending and limit number of days
+                weeklyHabitStats.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (weeklyHabitStats.length > MAX_WEEKLY_STATS_DAYS) weeklyHabitStats = weeklyHabitStats.slice(0, MAX_WEEKLY_STATS_DAYS);
+
+                // Update habit streak
+                if (pastDayTotalHabits > 0 && pastDayHabitCompletions === pastDayTotalHabits) { // All habits completed on old day
+                    if (habitStreakLastAchievedDate) {
+                        const expectedPrevHabitStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Expected previous streak date
+                        if (habitStreakLastAchievedDate === expectedPrevHabitStreakDate) habitStreak++; else habitStreak = 1; // Reset streak if not consecutive
+                    } else habitStreak = 1; // Start new streak
+                    habitStreakLastAchievedDate = currentDayString; // Save streak achievement date
+                } else {
+                    // If old day is yesterday and not all completed, reset streak
+                    const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
+                    if (currentDayString === yesterdayStr && pastDayTotalHabits > 0) { // Only reset if there were habits yesterday
+                        habitStreak = 0; 
+                        habitStreakLastAchievedDate = null; // Reset streak date
+                    }
+                }
+
+                workouts = []; // Reset workouts for new day
+                habits = []; // Reset habits for new day
+                currentDayString = todayStr; // Update current date
             }
-            updateCurrentDayWeeklyStat(); // Update stats for the current day (can be new day or same day if not past midnight)
+            updateCurrentDayStats(); // Update stats for current day (could be new day or same day if not past midnight)
         }
 
-        // Update current day's stats in weeklyStats
-        function updateCurrentDayWeeklyStat() {
-            if (!currentDayString) return; // No current day yet
-            const todayActualCompletions = workouts.filter(w => w.completed).length;
-            const todayTotalTasks = workouts.length;
-            const todayStatPayload = {
-                date: currentDayString, total: todayTotalTasks,
-                completed: todayActualCompletions, exercises: workouts.map(w => w.name)
+        // Update stats for the current day in weeklyStats and weeklyHabitStats
+        function updateCurrentDayStats() {
+            if (!currentDayString) return; // No current date yet
+
+            // Update workout stats for current day
+            const todayWorkoutCompletions = workouts.filter(w => w.completed).length;
+            const todayTotalWorkouts = workouts.length;
+            const todayWorkoutStatPayload = {
+                date: currentDayString, total: todayTotalWorkouts,
+                completed: todayWorkoutCompletions, exercises: workouts.map(w => w.name)
             };
-            const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
-            if (existingStatIndex > -1) weeklyStats[existingStatIndex] = todayStatPayload; // Update if exists
-            else weeklyStats.push(todayStatPayload); // Add new if not exists
+            const existingWorkoutStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+            if (existingWorkoutStatIndex > -1) weeklyStats[existingWorkoutStatIndex] = todayWorkoutStatPayload; // Update if exists
+            else weeklyStats.push(todayWorkoutStatPayload); // Add new if not exists
             
             weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort
             if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Limit days
 
+            // Update habit stats for current day
+            const todayHabitCompletions = habits.filter(h => h.completed).length;
+            const todayTotalHabits = habits.length;
+            const todayHabitStatPayload = {
+                date: currentDayString, total: todayTotalHabits,
+                completed: todayHabitCompletions, habits: habits.map(h => h.name)
+            };
+            const existingHabitStatIndex = weeklyHabitStats.findIndex(s => s.date === currentDayString);
+            if (existingHabitStatIndex > -1) weeklyHabitStats[existingHabitStatIndex] = todayHabitStatPayload; // Update if exists
+            else weeklyHabitStats.push(todayHabitStatPayload); // Add new if not exists
+            
+            weeklyHabitStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort
+            if (weeklyHabitStats.length > MAX_WEEKLY_STATS_DAYS) weeklyHabitStats = weeklyHabitStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Limit days
+
             saveDataToBackendless(); // Save user stats
         }
 
-        // Utility functions to get statistical information
-        function getCompletedCount() { return workouts.filter(w => w.completed).length; }
-        function getCompletionRate() { const c = getCompletedCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
-        function formatDate(dateString) { // Format date (e.g., T2, 28/05)
+        // Utility functions to get workout stats
+        function getCompletedWorkoutCount() { return workouts.filter(w => w.completed).length; }
+        function getWorkoutCompletionRate() { const c = getCompletedWorkoutCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
+        function formatDate(dateString) { // Format date (e.g., Mon, 28/05)
             const date = new Date(dateString); const userTimezoneOffset = date.getTimezoneOffset() * 60000;
             const localDate = new Date(date.getTime() + userTimezoneOffset); // Adjust timezone
             return localDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', weekday: 'short' });
         }
-        function getWeeklyAverage() { // Average completion rate for the last 7 days
+        function getWeeklyWorkoutAverage() { // Average completion rate for last 7 days
             if (weeklyStats.length === 0) return 0; const relevantStats = weeklyStats.slice(0, 7);
             const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
             const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
             return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
         }
-        function getMostActiveDay() { // Day with most completed workouts
+        function getMostActiveWorkoutDay() { // Day with most completed workouts
             if (weeklyStats.length === 0) return 'Chưa có'; let maxCompleted = -1; let mostActiveDayData = null;
             for (const day of weeklyStats) { if (day.completed > maxCompleted) { maxCompleted = day.completed; mostActiveDayData = day; } }
             return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
         }
-        function getCurrentWeekTotalCompleted() { const r = weeklyStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
+        function getCurrentWeekTotalCompletedWorkouts() { const r = weeklyStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
 
-        // Render header (sub-tabs for workouts)
-        function renderWorkoutSubTabs() {
-            const todayTabBtn = document.getElementById('today-tab-btn');
-            const myWorkoutsTabBtn = document.getElementById('my-workouts-tab-btn');
-            const statsTabBtn = document.getElementById('stats-tab-btn');
-            const workoutTabsContainer = document.getElementById('workout-tabs');
+        // Utility functions to get habit stats
+        function getCompletedHabitCount() { return habits.filter(h => h.completed).length; }
+        function getHabitCompletionRate() { const c = getCompletedHabitCount(); return habits.length > 0 ? Math.round((c / habits.length) * 100) : 0; }
+        function getWeeklyHabitAverage() { // Average completion rate for last 7 days
+            if (weeklyHabitStats.length === 0) return 0; const relevantStats = weeklyHabitStats.slice(0, 7);
+            const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
+            const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
+            return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+        }
+        function getMostActiveHabitDay() { // Day with most completed habits
+            if (weeklyHabitStats.length === 0) return 'Chưa có'; let maxCompleted = -1; let mostActiveDayData = null;
+            for (const day of weeklyHabitStats) { if (day.completed > maxCompleted) { maxCompleted = day.completed; mostActiveDayData = day; } }
+            return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
+        }
+        function getCurrentWeekTotalCompletedHabits() { const r = weeklyHabitStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
 
-            if (currentMainTab === 'workout') {
-                workoutTabsContainer.style.display = 'flex';
+
+        // Render header (tabs) - Now using bottom navigation
+        function renderBottomNav() {
+            document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`${currentTab}-tab-btn`).classList.add('active');
+        }
+
+        // Render content for "Workout" tab (formerly "Today" and "My Workouts")
+        function renderWorkoutTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="flex bg-gray-800/50 rounded-xl p-1 mb-6">
+                    <button id="today-workout-subtab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Hôm nay
+                    </button>
+                    <button id="my-workouts-subtab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Bài tập của tôi
+                    </button>
+                </div>
+                <div id="workout-subtab-content"></div>
+            `;
+            // Set initial sub-tab and render its content
+            let currentWorkoutSubTab = 'today-workout'; // Default sub-tab
+            function renderWorkoutSubTabContent() {
+                const subTabContent = document.getElementById('workout-subtab-content');
+                const todayBtn = document.getElementById('today-workout-subtab-btn');
+                const myWorkoutsBtn = document.getElementById('my-workouts-subtab-btn');
                 const baseClass = "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all";
                 const activeClass = "bg-gradient-to-r from-purple-500 to-pink-500 text-white";
                 const inactiveClass = "text-gray-400 hover:text-white";
-                todayTabBtn.className = `${baseClass} ${currentWorkoutSubTab === 'today' ? activeClass : inactiveClass}`;
-                myWorkoutsTabBtn.className = `${baseClass} ${currentWorkoutSubTab === 'my-workouts' ? activeClass : inactiveClass}`;
-                statsTabBtn.className = `${baseClass} ${currentWorkoutSubTab === 'stats' ? activeClass : inactiveClass}`;
-            } else {
-                workoutTabsContainer.style.display = 'none';
-            }
-        }
 
-        // Render content for "Today" tab (Workout section)
-        function renderTodayWorkoutTab() {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${getCompletedCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
-                        <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${streak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
-                        <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${getCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
-                    </div>
-                </div>
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
-                    <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ hôm nay</h3><span class="text-sm text-gray-400">${getCompletedCount()}/${workouts.length}</span></div>
-                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getCompletionRate()}%"></div></div>
-                    <p class="text-xs text-gray-400 text-center">${getCompletionRate() === 100 && workouts.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả bài tập!' : workouts.length > 0 ? `Còn ${workouts.length - getCompletedCount()} bài tập nữa` : 'Thêm bài tập cho hôm nay!'}</p>
-                </div>
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                    <div class="p-4 border-b border-white/10">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-bold">Bài tập hôm nay</h2>
-                            <div class="flex space-x-2">
-                                <button id="save-data-to-sheet-btn" class="flex items-center space-x-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                    <i data-lucide="save" class="w-4 h-4"></i><span class="hidden sm:inline">Lưu dữ liệu</span>
-                                </button>
-                                <button id="add-workout-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                    <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm</span>
-                                </button>
+                todayBtn.className = `${baseClass} ${currentWorkoutSubTab === 'today-workout' ? activeClass : inactiveClass}`;
+                myWorkoutsBtn.className = `${baseClass} ${currentWorkoutSubTab === 'my-workouts' ? activeClass : inactiveClass}`;
+
+                if (currentWorkoutSubTab === 'today-workout') {
+                    subTabContent.innerHTML = `
+                        <div class="grid grid-cols-3 gap-3 mb-6">
+                            <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
+                                <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
+                                <p class="text-xl font-bold">${getCompletedWorkoutCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
+                                <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
+                                <p class="text-xl font-bold">${streak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
+                                <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
+                                <p class="text-xl font-bold">${getWorkoutCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
                             </div>
                         </div>
-                    </div>
-                    <div id="add-new-workout-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormToday ? 'block' : 'none'};">
-                        <div class="flex justify-end mb-3"><button id="close-add-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                            <input type="number" id="new-workout-sets-today" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <input type="number" id="new-workout-reps-today" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <input type="number" id="new-workout-weight-today" placeholder="Tạ (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                            <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
+                            <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ hôm nay</h3><span class="text-sm text-gray-400">${getCompletedWorkoutCount()}/${workouts.length}</span></div>
+                            <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getWorkoutCompletionRate()}%"></div></div>
+                            <p class="text-xs text-gray-400 text-center">${getWorkoutCompletionRate() === 100 && workouts.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả bài tập!' : workouts.length > 0 ? `Còn ${workouts.length - getCompletedWorkoutCount()} bài tập nữa` : 'Thêm bài tập cho hôm nay!'}</p>
                         </div>
-                        <div class="flex space-x-3 mt-3"><button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
-                    </div>
-                    <div id="workout-list-container" class="p-4 space-y-3"></div>
-                </div>`;
-            // Attach event listeners for buttons
-            document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderApp(); };
-            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
-            if (showAddWorkoutFormToday) {
-                document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderApp(); };
-                document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
+                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                            <div class="p-4 border-b border-white/10">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg font-bold">Bài tập hôm nay</h2>
+                                    <div class="flex space-x-2">
+                                        <button id="save-data-to-sheet-btn" class="flex items-center space-x-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                            <i data-lucide="save" class="w-4 h-4"></i><span class="hidden sm:inline">Lưu dữ liệu</span>
+                                        </button>
+                                        <button id="add-workout-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                            <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="add-new-workout-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormToday ? 'block' : 'none'};">
+                                <div class="flex justify-end mb-3"><button id="close-add-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                                    <input type="number" id="new-workout-sets-today" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                                    <input type="number" id="new-workout-reps-today" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                                    <input type="number" id="new-workout-weight-today" placeholder="Tạ (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                                    <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                                </div>
+                                <div class="flex space-x-3 mt-3"><button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
+                            </div>
+                            <div id="workout-list-container" class="p-4 space-y-3"></div>
+                        </div>
+                    `;
+                    // Assign events for buttons
+                    document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderWorkoutSubTabContent(); };
+                    document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
+                    if (showAddWorkoutFormToday) {
+                        document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderWorkoutSubTabContent(); };
+                        document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
+                    }
+                    renderWorkoutItems(); // Render workout list
+                } else { // 'my-workouts' sub-tab
+                    subTabContent.innerHTML = `
+                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                            <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
+                                <h2 class="text-lg font-bold">Tất cả bài tập của tôi</h2>
+                                <button id="add-workout-my-workouts-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                    <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm bài tập mới</span>
+                                </button></div></div>
+                            <div id="add-new-workout-form-my-workouts" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormMyWorkouts ? 'block' : 'none'};">
+                                <div class="flex justify-end mb-3"><button id="close-add-form-my-workouts-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                                    <input type="number" id="new-workout-sets-my-workouts" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                                    <input type="number" id="new-workout-reps-my-workouts" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                                    <input type="number" id="new-workout-default-weight-my-workouts" placeholder="Tạ mặc định (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                                    <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                                </div>
+                                <div class="flex space-x-3 mt-3"><button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào danh sách chính</button></div>
+                            </div>
+                            <div id="all-workouts-list-container" class="p-4 space-y-3"></div>
+                        </div>
+                    `;
+                    // Assign events for buttons
+                    document.getElementById('add-workout-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = true; renderWorkoutSubTabContent(); };
+                    if (showAddWorkoutFormMyWorkouts) {
+                        document.getElementById('close-add-form-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = false; renderWorkoutSubTabContent(); };
+                        document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
+                    }
+                    renderAllWorkoutItems(); // Render all workout list
+                }
+                lucide.createIcons();
             }
-            renderWorkoutItems(); // Render workout list
-            lucide.createIcons(); // Create icons
+
+            // Initial render of workout sub-tab content
+            renderWorkoutSubTabContent();
+
+            // Assign events for sub-tab buttons
+            document.getElementById('today-workout-subtab-btn').addEventListener('click', () => {
+                currentWorkoutSubTab = 'today-workout';
+                showAddWorkoutFormToday = false; // Reset form state
+                renderWorkoutSubTabContent();
+            });
+            document.getElementById('my-workouts-subtab-btn').addEventListener('click', () => {
+                currentWorkoutSubTab = 'my-workouts';
+                showAddWorkoutFormMyWorkouts = false; // Reset form state
+                renderWorkoutSubTabContent();
+            });
+            lucide.createIcons();
         }
 
-        // Render workout items in "Today" tab
+        // Render workout items in "Today" workout sub-tab
         async function renderWorkoutItems() {
             const workoutListContainer = document.getElementById('workout-list-container');
             if (!workoutListContainer) return;
@@ -613,8 +756,8 @@
                 const workoutItem = document.createElement('div');
                 workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${workout.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
                 
-                // Compare with previous session
-                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Can add * weight if comparing weighted volume
+                // Compare with previous workout
+                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Can add * weight if comparing volume with weight
                 const comparisonResult = await getPreviousWorkoutPerformance(workout.master_id, currentVolume);
                 let comparisonIcon = '', comparisonColor = 'text-gray-400';
                 if (comparisonResult === 'increased') { comparisonIcon = '<i data-lucide="arrow-up" class="w-4 h-4 text-green-400"></i>'; comparisonColor = 'text-green-400'; }
@@ -641,7 +784,7 @@
                     <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
                 workoutListContainer.appendChild(workoutItem);
             }
-            // Attach event listeners for toggle, remove, and workout detail modal buttons
+            // Assign events for toggle, remove, and workout detail modal buttons
             document.querySelectorAll('.toggle-workout-btn').forEach(b => { b.onclick = (e) => toggleWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-workout-btn').forEach(b => { b.onclick = (e) => removeWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#workout-list-container .workout-details-trigger').forEach(el => {
@@ -661,19 +804,19 @@
             } return 'no_data'; // No previous data
         }
         
-        // Utility function to rebind listeners to an element (avoids listener stacking)
+        // Utility function to re-assign listener to an element (avoids listener stacking)
         function rebindListeners(elementId, newOnClick) {
             const originalElement = document.getElementById(elementId);
             if (!originalElement) return null;
             const newElement = originalElement.cloneNode(true); // Clone element
             originalElement.parentNode.replaceChild(newElement, originalElement); // Replace old element with new
             if (newOnClick) {
-                newElement.onclick = newOnClick; // Attach new listener
+                newElement.onclick = newOnClick; // Assign new listener
             }
-            return newElement; // Return the new element with attached listener
+            return newElement; // Return new element with listener assigned
         }
 
-        // Display workout detail modal
+        // Show workout details modal
         async function showWorkoutDetails(masterId, workoutName, imageUrl, currentWorkoutObjectId = null) {
             const modal = document.getElementById('workout-detail-modal');
             const modalWorkoutName = document.getElementById('modal-workout-name');
@@ -705,12 +848,12 @@
                     modalRepsInput.value = currentWorkout.num_reps;
                     modalWeightInput.value = currentWorkout.weight_kg != null ? currentWorkout.weight_kg : 0;
                 } else {
-                    // Fallback if workout not found (rare case)
+                    // Fallback if workout not found (rare)
                     modalSetsInput.value = 1; modalRepsInput.value = 1; modalWeightInput.value = 0;
                     console.warn(`Workout with objectId ${currentWorkoutObjectId} not found for modal editor.`);
                 }
 
-                // Rebind listeners for +/- and Save buttons using rebindListeners to avoid issues
+                // Re-assign listeners for +/- and Save buttons using rebindListeners to avoid issues
                 rebindListeners('sets-decrement-btn', () => {
                     const cv = parseInt(modalSetsInput.value); modalSetsInput.value = Math.max(1, (isNaN(cv) ? 2 : cv) - 1);
                 });
@@ -749,7 +892,7 @@
                 if (!masterId) {
                      modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">No master ID to load history.</p>';
                 } else {
-                    // Load and display history of the last 5 sessions for this workout
+                    // Load and display last 5 workout history entries for this workout
                     const queryBuilder = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`).setSortBy(['workout_date DESC']).setPageSize(5);
                     try {
                         const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
@@ -771,7 +914,7 @@
             lucide.createIcons(); // Create icons
         }
 
-        // Close workout detail modal
+        // Close workout details modal
         function closeWorkoutDetailsModal() { document.getElementById('workout-detail-modal').classList.remove('open'); }
 
         // Update workout details (Sets, Reps, Weight)
@@ -787,12 +930,12 @@
                 };
                 try {
                     await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData); // Save to Backendless
-                    // Update local workouts array
+                    // Update locally
                     workouts[workoutIndex].num_sets = newSets; 
                     workouts[workoutIndex].num_reps = newReps; 
                     workouts[workoutIndex].weight_kg = newWeight;
                     workouts[workoutIndex].volume = newSets * newReps;
-                    updateCurrentDayWeeklyStat(); // Update daily stats
+                    updateCurrentDayStats(); // Update daily stats
                     showMessage("Workout details updated!", "success");
                     closeWorkoutDetailsModal(); // Close modal
                     renderApp(); // Re-render UI
@@ -800,40 +943,7 @@
             }
         }
 
-        // Render content for "My Workouts" tab (Workout section)
-        function renderMyWorkoutsTab() {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                    <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold">Tất cả bài tập của tôi</h2>
-                        <button id="add-workout-my-workouts-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm bài tập mới</span>
-                        </button></div></div>
-                    <div id="add-new-workout-form-my-workouts" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormMyWorkouts ? 'block' : 'none'};">
-                        <div class="flex justify-end mb-3"><button id="close-add-form-my-workouts-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                            <input type="number" id="new-workout-sets-my-workouts" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <input type="number" id="new-workout-reps-my-workouts" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                            <input type="number" id="new-workout-default-weight-my-workouts" placeholder="Tạ mặc định (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                            <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                        </div>
-                        <div class="flex space-x-3 mt-3"><button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào danh sách chính</button></div>
-                    </div>
-                    <div id="all-workouts-list-container" class="p-4 space-y-3"></div>
-                </div>`;
-            // Attach event listeners for buttons
-            document.getElementById('add-workout-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = true; renderApp(); };
-            if (showAddWorkoutFormMyWorkouts) {
-                document.getElementById('close-add-form-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = false; renderApp(); };
-                document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
-            }
-            renderAllWorkoutItems(); // Render all workout items
-            lucide.createIcons();
-        }
-
-        // Render master list of all workouts
+        // Render all workout items (master list)
         function renderAllWorkoutItems() {
             const cont = document.getElementById('all-workouts-list-container'); if (!cont) return;
             cont.innerHTML = allWorkouts.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào.</p>' : '';
@@ -853,45 +963,172 @@
                     </div>`;
                 cont.appendChild(item);
             });
-            // Attach event listeners for buttons
+            // Assign events for buttons
             document.querySelectorAll('.add-to-today-btn').forEach(b => { b.onclick = (e) => addSelectedWorkoutToToday(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-master-workout-btn').forEach(b => { b.onclick = (e) => removeMasterWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#all-workouts-list-container .workout-details-trigger').forEach(el => {
-                // When clicking on a workout, show detail modal (history only, no editing)
+                // When clicking on workout, show detail modal (history only, no editing)
                 el.onclick = (e) => showWorkoutDetails(e.currentTarget.dataset.masterId, e.currentTarget.dataset.workoutName, e.currentTarget.dataset.imageUrl, null);
             });
             lucide.createIcons();
         }
 
-        // Render content for "Stats" tab (Workout section)
-        function renderStatsWorkoutTab() {
+        // Render content for "Habit" tab
+        function renderHabitTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
-                <div class="space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30 text-center">
-                            <i data-lucide="activity" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompleted()}</p><p class="text-xs text-purple-300">Bài tập (7 ngày)</p></div>
-                        <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30 text-center">
-                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${getCompletedHabitCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
                     </div>
-                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-purple-400"></i>Lịch sử hoạt động</h3>
-                        <div id="weekly-stats-container" class="space-y-3"></div></div>
-                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="trophy" class="w-5 h-5 mr-2 text-yellow-400"></i>Thành tích</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày liên tiếp</p><p class="text-sm text-gray-400">Tập luyện đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${streak} ngày</span></div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveDay()}</span></div>
-                            <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng bài tập</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalWorkouts}</span></div>
-                        </div></div></div>`;
-            renderWeeklyStatsHistory(); // Render weekly stats history
+                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
+                        <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${habitStreak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
+                        <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${getHabitCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
+                    </div>
+                </div>
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
+                    <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ thói quen hôm nay</h3><span class="text-sm text-gray-400">${getCompletedHabitCount()}/${habits.length}</span></div>
+                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getHabitCompletionRate()}%"></div></div>
+                    <p class="text-xs text-gray-400 text-center">${getHabitCompletionRate() === 100 && habits.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả thói quen!' : habits.length > 0 ? `Còn ${habits.length - getCompletedHabitCount()} thói quen nữa` : 'Thêm thói quen cho hôm nay!'}</p>
+                </div>
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Thói quen hôm nay</h2>
+                            <button id="add-habit-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm thói quen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="add-new-habit-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddHabitFormToday ? 'block' : 'none'};">
+                        <div class="flex justify-end mb-3"><button id="close-add-habit-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                        <input type="text" id="new-habit-name-today" placeholder="Tên thói quen (ví dụ: Tắm, Giặt đồ, Ngủ trước 11h đêm)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 mb-3" />
+                        <div class="flex space-x-3 mt-3"><button id="add-new-habit-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
+                    </div>
+                    <div id="habit-list-container" class="p-4 space-y-3"></div>
+                </div>
+
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold">Tất cả thói quen của tôi</h2>
+                        </div></div>
+                    <div id="all-habits-list-container" class="p-4 space-y-3"></div>
+                </div>
+            `;
+            // Assign events for buttons
+            document.getElementById('add-habit-today-btn').onclick = () => { showAddHabitFormToday = true; renderApp(); };
+            if (showAddHabitFormToday) {
+                document.getElementById('close-add-habit-form-today-btn').onclick = () => { showAddHabitFormToday = false; renderApp(); };
+                document.getElementById('add-new-habit-today-btn').onclick = addNewHabitFromTodayTab;
+            }
+            renderHabitItems(); // Render daily habit list
+            renderAllHabitItems(); // Render all habit list
             lucide.createIcons();
         }
 
-        // Render weekly workout stats history
-        function renderWeeklyStatsHistory() {
-            const cont = document.getElementById('weekly-stats-container'); if (!cont) return;
-            cont.innerHTML = weeklyStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê.</p>' : '';
+        // Render daily habit items
+        function renderHabitItems() {
+            const habitListContainer = document.getElementById('habit-list-container');
+            if (!habitListContainer) return;
+            habitListContainer.innerHTML = habits.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có thói quen nào.</p>' : '';
+
+            habits.forEach(habit => {
+                const habitItem = document.createElement('div');
+                habitItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${habit.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
+                
+                habitItem.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1">
+                        <button class="toggle-habit-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${habit.objectId}">
+                            ${habit.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
+                        </button>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-medium text-sm ${habit.completed ? 'text-green-400 line-through' : 'text-white'} truncate">${habit.name}</h3>
+                        </div>
+                    </div>
+                    <button class="remove-habit-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${habit.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+                habitListContainer.appendChild(habitItem);
+            });
+            // Assign events for toggle and remove buttons
+            document.querySelectorAll('.toggle-habit-btn').forEach(b => { b.onclick = (e) => toggleHabit(e.currentTarget.dataset.id); });
+            document.querySelectorAll('.remove-habit-btn').forEach(b => { b.onclick = (e) => removeHabit(e.currentTarget.dataset.id); });
+            lucide.createIcons();
+        }
+
+        // Render all habit items (master list)
+        function renderAllHabitItems() {
+            const cont = document.getElementById('all-habits-list-container'); if (!cont) return;
+            cont.innerHTML = allHabits.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có thói quen nào.</p>' : '';
+            allHabits.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(h => { // Sort by name
+                const item = document.createElement('div'); item.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1">
+                        <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0"><i data-lucide="check-square" class="w-6 h-6 text-gray-400"></i></div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-medium text-sm text-white truncate">${h.name}</h3>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 ml-2 flex-shrink-0">
+                        <button class="add-habit-to-today-btn bg-green-500 hover:bg-green-600 p-2 rounded-lg text-xs transition-colors" data-id="${h.objectId}"><i data-lucide="calendar-plus" class="w-4 h-4"></i></button>
+                        <button class="remove-master-habit-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${h.objectId}"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>`;
+                cont.appendChild(item);
+            });
+            // Assign events for buttons
+            document.querySelectorAll('.add-habit-to-today-btn').forEach(b => { b.onclick = (e) => addSelectedHabitToToday(e.currentTarget.dataset.id); });
+            document.querySelectorAll('.remove-master-habit-btn').forEach(b => { b.onclick = (e) => removeMasterHabit(e.currentTarget.dataset.id); });
+            lucide.createIcons();
+        }
+
+        // Render content for "Stats" tab
+        function renderStatsTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="space-y-6">
+                    <h2 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Thống kê tổng quan</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30 text-center">
+                            <i data-lucide="activity" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompletedWorkouts()}</p><p class="text-xs text-purple-300">Bài tập (7 ngày)</p></div>
+                        <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30 text-center">
+                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyWorkoutAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
+                        <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30 text-center">
+                            <i data-lucide="check-square" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompletedHabits()}</p><p class="text-xs text-purple-300">Thói quen (7 ngày)</p></div>
+                        <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30 text-center">
+                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyHabitAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
+                    </div>
+
+                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-purple-400"></i>Lịch sử tập luyện</h3>
+                        <div id="weekly-workout-stats-container" class="space-y-3"></div></div>
+                    
+                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-blue-400"></i>Lịch sử thói quen</h3>
+                        <div id="weekly-habit-stats-container" class="space-y-3"></div></div>
+
+                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="trophy" class="w-5 h-5 mr-2 text-yellow-400"></i>Thành tích</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày tập luyện liên tiếp</p><p class="text-sm text-gray-400">Tập luyện đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${streak} ngày</span></div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày tập tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveWorkoutDay()}</span></div>
+                            <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng bài tập</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalWorkouts}</span></div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="check-square" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày thói quen liên tiếp</p><p class="text-sm text-gray-400">Hoàn thành thói quen đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${habitStreak} ngày</span></div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày thói quen tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveHabitDay()}</span></div>
+                            <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="check-circle" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng thói quen hoàn thành</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalHabitsCompleted}</span></div>
+                        </div></div></div>`;
+            renderWeeklyWorkoutStatsHistory(); // Render workout stats history
+            renderWeeklyHabitStatsHistory(); // Render habit stats history
+            lucide.createIcons();
+        }
+
+        // Render workout stats history
+        function renderWeeklyWorkoutStatsHistory() {
+            const cont = document.getElementById('weekly-workout-stats-container'); if (!cont) return;
+            cont.innerHTML = weeklyStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê bài tập.</p>' : '';
             weeklyStats.forEach(day => {
                 const perc = day.total > 0 ? (day.completed / day.total) * 100 : 0;
                 const isToday = day.date === getTodayDateString();
@@ -908,193 +1145,34 @@
             lucide.createIcons();
         }
 
-        // Render content for "Habit" tab
-        function renderHabitTab() {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-semibold">Tiến độ thói quen hôm nay</h3>
-                        <span class="text-sm text-gray-400">${habits.filter(h => h.completed).length}/${habits.length}</span>
-                    </div>
-                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
-                        <div class="bg-gradient-to-r from-teal-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${habits.length > 0 ? Math.round((habits.filter(h => h.completed).length / habits.length) * 100) : 0}%"></div>
-                    </div>
-                    <p class="text-xs text-gray-400 text-center">
-                        ${habits.length > 0 && habits.filter(h => h.completed).length === habits.length ? '🎉 Tuyệt vời! Hoàn thành tất cả thói quen!' : habits.length > 0 ? `Còn ${habits.length - habits.filter(h => h.completed).length} thói quen nữa` : 'Thêm thói quen cho hôm nay!'}
-                    </p>
-                </div>
-
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                    <div class="p-4 border-b border-white/10">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-bold">Thói quen hàng ngày</h2>
-                            <button id="add-habit-btn" class="flex items-center space-x-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm thói quen</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="add-new-habit-form" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddHabitForm ? 'block' : 'none'};">
-                        <div class="flex justify-end mb-3"><button id="close-add-habit-form-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                        <input type="text" id="new-habit-name" placeholder="Tên thói quen (ví dụ: Tắm, Giặt đồ, Ngủ trước 11h)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-teal-500" />
-                        <button id="add-new-habit-btn" class="w-full bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors text-sm mt-3">Thêm thói quen</button>
-                    </div>
-                    <div id="habit-list-container" class="p-4 space-y-3"></div>
-                </div>
-
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-                    <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-teal-400"></i>Thống kê thói quen</h3>
-                    <div id="habit-stats-container" class="space-y-3">
-                        <p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê thói quen.</p>
-                    </div>
-                </div>
-            `;
-            // Attach event listeners
-            document.getElementById('add-habit-btn').onclick = () => { showAddHabitForm = true; renderApp(); };
-            if (showAddHabitForm) {
-                document.getElementById('close-add-habit-form-btn').onclick = () => { showAddHabitForm = false; renderApp(); };
-                document.getElementById('add-new-habit-btn').onclick = addNewHabit;
-            }
-            renderHabitItems(); // Render habit list
-            renderHabitStats(); // Render habit stats
-            lucide.createIcons();
-        }
-
-        // Render habit items in "Habit" tab
-        function renderHabitItems() {
-            const habitListContainer = document.getElementById('habit-list-container');
-            if (!habitListContainer) return;
-            habitListContainer.innerHTML = habits.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có thói quen nào.</p>' : '';
-
-            habits.forEach(habit => {
-                const habitItem = document.createElement('div');
-                habitItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${habit.completed ? 'bg-teal-500/10 border-teal-500/30' : 'bg-gray-800/50 border-gray-700'}`;
-                
-                habitItem.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
-                        <button class="toggle-habit-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${habit.objectId}">
-                            ${habit.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-teal-400"></i>'}
-                        </button>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-medium text-sm ${habit.completed ? 'text-teal-400 line-through' : 'text-white'} truncate">${habit.name}</h3>
-                        </div>
-                    </div>
-                    <button class="remove-habit-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${habit.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
-                habitListContainer.appendChild(habitItem);
+        // Render habit stats history
+        function renderWeeklyHabitStatsHistory() {
+            const cont = document.getElementById('weekly-habit-stats-container'); if (!cont) return;
+            cont.innerHTML = weeklyHabitStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê thói quen.</p>' : '';
+            weeklyHabitStats.forEach(day => {
+                const perc = day.total > 0 ? (day.completed / day.total) * 100 : 0;
+                const isToday = day.date === getTodayDateString();
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-blue-500/20 border border-blue-500/30' : 'bg-gray-800/50'}`; // Highlight current day
+                item.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2"><span class="text-sm font-medium">${formatDate(day.date)}${isToday && day.date === currentDayString ? '<span class="text-blue-400 ml-1">(Hôm nay)</span>' : ''}</span></div>
+                        <span class="text-sm text-gray-400">${day.completed}/${day.total}</span></div>
+                    <div class="w-full bg-gray-700 rounded-full h-2 mb-1"><div class="bg-gradient-to-r from-green-400 to-purple-500 h-2 rounded-full transition-all duration-500" style="width: ${perc}%"></div></div>
+                    ${day.habits && day.habits.length > 0 ? `<div class="flex flex-wrap gap-1 mt-2">${day.habits.slice(0,3).map(h => `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs whitespace-nowrap">${h}</span>`).join('')}${day.habits.length > 3 ? `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs">+${day.habits.length - 3}</span>` : ''}</div>` : '<p class="text-xs text-gray-500 italic mt-1">Không có thói quen.</p>'}`;
+                cont.appendChild(item);
             });
-            // Attach event listeners
-            document.querySelectorAll('.toggle-habit-btn').forEach(b => { b.onclick = (e) => toggleHabit(e.currentTarget.dataset.id); });
-            document.querySelectorAll('.remove-habit-btn').forEach(b => { b.onclick = (e) => removeHabit(e.currentTarget.dataset.id); });
-            lucide.createIcons();
-        }
-
-        // Render habit statistics
-        async function renderHabitStats() {
-            const habitStatsContainer = document.getElementById('habit-stats-container');
-            if (!habitStatsContainer) return;
-
-            // Fetch all habit entries for the current user to calculate statistics
-            const allDailyHabitsQueryBuilder = Backendless.DataQueryBuilder.create()
-                .setWhereClause(`ownerId = '${userId}'`)
-                .setSortBy(['habit_date DESC']);
-            const allDailyHabits = await Backendless.Data.of('DailyHabits').find(allDailyHabitsQueryBuilder);
-
-            // Group habits by name and calculate completion count
-            const habitCompletionCounts = {};
-            const habitDailyRecords = {}; // To track daily completion for streak
-            allDailyHabits.forEach(entry => {
-                if (!habitCompletionCounts[entry.name]) {
-                    habitCompletionCounts[entry.name] = { total: 0, completed: 0, streak: 0, lastCompletedDate: null };
-                }
-                habitCompletionCounts[entry.name].total++;
-                if (entry.completed) {
-                    habitCompletionCounts[entry.name].completed++;
-                }
-
-                // Track daily records for streak calculation
-                if (!habitDailyRecords[entry.name]) {
-                    habitDailyRecords[entry.name] = {};
-                }
-                habitDailyRecords[entry.name][entry.habit_date] = entry.completed;
-            });
-
-            // Calculate streaks for each habit
-            for (const habitName in habitCompletionCounts) {
-                let currentHabitStreak = 0;
-                let lastDate = null;
-                const sortedDates = Object.keys(habitDailyRecords[habitName]).sort(); // Sort dates ascending
-
-                for (let i = 0; i < sortedDates.length; i++) {
-                    const date = sortedDates[i];
-                    const completed = habitDailyRecords[habitName][date];
-
-                    if (completed) {
-                        if (lastDate) {
-                            const prevDay = new Date(new Date(date).getTime() - 86400000).toISOString().split('T')[0];
-                            if (prevDay === lastDate) {
-                                currentHabitStreak++;
-                            } else {
-                                currentHabitStreak = 1; // Reset if not consecutive
-                            }
-                        } else {
-                            currentHabitStreak = 1;
-                        }
-                        lastDate = date;
-                    } else {
-                        currentHabitStreak = 0; // Break streak if not completed
-                        lastDate = null;
-                    }
-                }
-                habitCompletionCounts[habitName].streak = currentHabitStreak;
-            }
-
-            habitStatsContainer.innerHTML = '';
-            if (Object.keys(habitCompletionCounts).length === 0) {
-                habitStatsContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê thói quen.</p>';
-            } else {
-                for (const name in habitCompletionCounts) {
-                    const stats = habitCompletionCounts[name];
-                    const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-                    const item = document.createElement('div');
-                    item.className = `p-3 rounded-lg bg-gray-800/50 border border-gray-700`;
-                    item.innerHTML = `
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-medium text-white">${name}</h4>
-                            <span class="text-sm text-gray-400">${stats.completed}/${stats.total} (${completionRate}%)</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mb-1">
-                            <div class="bg-gradient-to-r from-teal-400 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: ${completionRate}%"></div>
-                        </div>
-                        <p class="text-xs text-gray-400 mt-2">Chuỗi: <span class="font-bold text-teal-300">${stats.streak} ngày</span></p>
-                    `;
-                    habitStatsContainer.appendChild(item);
-                }
-            }
             lucide.createIcons();
         }
 
 
-        // Render entire app (main tabs and current sub-tab content)
+        // Render the entire application (bottom nav and current tab content)
         function renderApp() {
             document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
-            renderWorkoutSubTabs(); // Render workout sub-tabs or hide them
-
-            // Update bottom nav bar active state
-            document.querySelectorAll('.bottom-nav-item').forEach(btn => {
-                if (btn.id === `nav-${currentMainTab}-btn`) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-
-            if (currentMainTab === 'workout') {
-                if (currentWorkoutSubTab === 'today') renderTodayWorkoutTab();
-                else if (currentWorkoutSubTab === 'my-workouts') renderMyWorkoutsTab();
-                else renderStatsWorkoutTab();
-            } else if (currentMainTab === 'habit') {
-                renderHabitTab();
-            }
+            renderBottomNav();
+            if (currentTab === 'workout') renderWorkoutTab();
+            else if (currentTab === 'habit') renderHabitTab();
+            else if (currentTab === 'stats') renderStatsTab();
             lucide.createIcons(); // Ensure icons are rendered after each DOM update
         }
 
@@ -1106,7 +1184,7 @@
                 try { 
                     await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); // Save to Backendless
                     workouts[idx].completed = newStatus; // Update locally
-                    updateCurrentDayWeeklyStat(); // Update stats
+                    updateCurrentDayStats(); // Update stats
                     renderApp(); // Re-render
                 }
                 catch (e) { 
@@ -1135,7 +1213,7 @@
             
             let masterId;
             // Check if this workout already exists in the master list (AllWorkouts) (based on name)
-            let existingMaster = allWorkouts.find(w => w.name === name); // Simple name match
+            let existingMaster = allWorkouts.find(w => w.name === name); // Simple match by name
             
             if (existingMaster) {
                 masterId = existingMaster.objectId; // Use existing masterId
@@ -1143,7 +1221,6 @@
                 // If not, create new in AllWorkouts
                 try { 
                     const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: weight, image_url: img };
-                    // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
                     const savedMaster = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                     masterId = savedMaster.objectId; 
                     allWorkouts.push(savedMaster); // Add to local list
@@ -1160,7 +1237,7 @@
                 num_reps: reps, 
                 weight_kg: weight,
                 volume: sets * reps, // Calculate volume
-                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Prefer new image, otherwise use image from master
+                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Prioritize new image, otherwise use master image
                 completed: false, 
                 workout_date: getTodayDateString() 
             };
@@ -1169,7 +1246,7 @@
                 const newDaily = await Backendless.Data.of('DailyWorkouts').save(dailyPayload); 
                 workouts.push(newDaily); 
                 totalWorkouts++; 
-                updateCurrentDayWeeklyStat(); 
+                updateCurrentDayStats(); 
                 showMessage("Workout added for today!", "success");
                 // Clear input fields
                 ['new-workout-name-today', 'new-workout-sets-today', 'new-workout-reps-today', 'new-workout-weight-today', 'new-workout-image-url-today'].forEach(id => document.getElementById(id).value = '');
@@ -1200,10 +1277,9 @@
             }
             try {
                 const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: defaultWeight, image_url: img };
-                // if(userId) masterPayload.ownerId = userId; // If AllWorkouts are user-specific
                 const saved = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                 allWorkouts.push(saved);
-                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Re-sort
+                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Sort
                 showMessage("Added to master list!", "success");
                 // Clear input fields
                 ['new-workout-name-my-workouts', 'new-workout-sets-my-workouts', 'new-workout-reps-my-workouts', 'new-workout-default-weight-my-workouts', 'new-workout-image-url-my-workouts'].forEach(id => document.getElementById(id).value = '');
@@ -1216,7 +1292,7 @@
         async function addSelectedWorkoutToToday(masterWorkoutObjectId) {
             const workoutToAdd = allWorkouts.find(w => w.objectId === masterWorkoutObjectId);
             if (workoutToAdd) {
-                // Check if this workout (based on master_id) is already in today's list
+                // Check if this workout (based on master_id) already exists in today's list
                 if (!workouts.some(w => w.master_id === masterWorkoutObjectId && w.workout_date === getTodayDateString())) {
                     const dailyPayload = { 
                         master_id: masterWorkoutObjectId, 
@@ -1234,7 +1310,7 @@
                         const newDaily = await Backendless.Data.of('DailyWorkouts').save(dailyPayload); 
                         workouts.push(newDaily); 
                         totalWorkouts++; 
-                        updateCurrentDayWeeklyStat(); 
+                        updateCurrentDayStats(); 
                         showMessage("Added to today's workouts!", "success"); 
                         renderApp(); 
                     }
@@ -1248,79 +1324,42 @@
             try { 
                 await Backendless.Data.of('DailyWorkouts').remove({ objectId }); 
                 workouts = workouts.filter(w => w.objectId !== objectId); 
-                updateCurrentDayWeeklyStat(); 
+                updateCurrentDayStats(); 
                 showMessage("Workout removed from today.", "success"); 
                 renderApp(); 
             }
-            catch (e) { console.error("Error deleting daily workout:", e); showMessage("Error deleting workout.", "error"); }
+            catch (e) { console.error("Error removing daily workout:", e); showMessage("Error removing workout.", "error"); }
         }
         // Remove workout from master list (AllWorkouts)
         async function removeMasterWorkout(objectId) { 
-            // Use a custom confirmation dialog instead of window.confirm
-            // Example: display a confirmation modal
-            // For now, for simplicity, skip confirmation or you can add it yourself
-            // if (!confirm("Are you sure you want to delete this workout from the master list?")) {
-            //     return;
-            // }
-            // Instead of confirm, you can display a custom modal here
-            // and only proceed with deletion if the user confirms in that modal.
-            // Example:
-            // showCustomConfirm("Are you sure you want to delete this workout from the master list?", async () => {
-            //    // deletion logic here
-            // });
-            // return; // Wait for confirmation from modal
-            
-            // Temporarily still using old method, but custom modal is recommended
-             if (!confirm("Are you sure you want to delete this workout from the master list? This action will also delete this workout from your workout history (if any).")) {
+             if (!confirm("Are you sure you want to delete this workout from the master list? This action will also remove this workout from your workout history (if any).")) {
                  return;
              }
-
-
             try { 
                 await Backendless.Data.of('AllWorkouts').remove({ objectId }); 
                 allWorkouts = allWorkouts.filter(w => w.objectId !== objectId); 
                 // Optional: Remove this workout from today's list if present
                 const wasInToday = workouts.some(w => w.master_id === objectId);
                 workouts = workouts.filter(w => w.master_id !== objectId);
-                if (wasInToday) updateCurrentDayWeeklyStat();
-
-                // Optional: Delete from history (DailyWorkouts) for all days
-                // const relatedDailyQuery = Backendless.DataQueryBuilder.create().setWhereClause(`master_id = '${objectId}' AND ownerId = '${userId}'`);
-                // await Backendless.Data.of('DailyWorkouts').bulkDelete(relatedDailyQuery);
-                // Need to reload weeklyStats if you want it to reflect deletion from history
+                if (wasInToday) updateCurrentDayStats();
 
                 showMessage("Workout removed from master list.", "success"); 
                 renderApp(); 
             }
-            catch (e) { console.error("Error deleting master workout:", e); showMessage("Error deleting workout from master list.", "error"); }
+            catch (e) { console.error("Error removing master workout:", e); showMessage("Error removing workout from master list.", "error"); }
         }
 
-        // Toggle habit completion status
-        async function toggleHabit(objectId) {
-            const idx = habits.findIndex(h => h.objectId === objectId);
-            if (idx > -1) {
-                const newStatus = !habits[idx].completed; 
-                try { 
-                    await Backendless.Data.of('DailyHabits').save({ objectId: objectId, completed: newStatus }); // Save to Backendless
-                    habits[idx].completed = newStatus; // Update locally
-                    // No specific daily stats for habits, but you might want to trigger a re-render of habit stats
-                    renderApp(); // Re-render
-                }
-                catch (e) { 
-                    console.error("Error toggling habit:", e); 
-                    showMessage("Error updating habit status.", "error"); 
-                }
+        // Add new habit from "Habit" tab
+        async function addNewHabitFromTodayTab() {
+            const name = document.getElementById('new-habit-name-today').value.trim();
+
+            if (!name) { 
+                showMessage("Habit name cannot be empty!", "error"); return; 
             }
-        }
-
-        // Add new habit
-        async function addNewHabit() {
-            const name = document.getElementById('new-habit-name').value.trim();
-            if (!name) { showMessage("Please enter a habit name!", "error"); return; }
-
+            
             let masterId;
-            // Check if this habit already exists in the master list (AllHabits)
-            let existingMaster = allHabits.find(h => h.name === name);
+            // Check if this habit already exists in the master list (AllHabits) (based on name)
+            let existingMaster = allHabits.find(h => h.name === name); // Simple match by name
             
             if (existingMaster) {
                 masterId = existingMaster.objectId; // Use existing masterId
@@ -1335,12 +1374,6 @@
                 catch(e) { console.error("Error adding master habit:", e); showMessage("Error adding master habit.", "error"); return; }
             }
 
-            // Check if this habit is already in today's list
-            if (habits.some(h => h.master_id === masterId && h.habit_date === getTodayDateString())) {
-                showMessage("This habit is already in today's list!", "info");
-                return;
-            }
-
             // Create record for DailyHabits
             const dailyPayload = { 
                 master_id: masterId, 
@@ -1353,37 +1386,87 @@
             try {
                 const newDaily = await Backendless.Data.of('DailyHabits').save(dailyPayload); 
                 habits.push(newDaily); 
+                updateCurrentDayStats(); 
                 showMessage("Habit added for today!", "success");
-                document.getElementById('new-habit-name').value = ''; // Clear input
-                showAddHabitForm = false; // Hide form
+                // Clear input field
+                document.getElementById('new-habit-name-today').value = '';
+                showAddHabitFormToday = false; // Hide form
                 renderApp();
             } catch (e) { console.error("Error adding daily habit:", e); showMessage("Error adding habit for today.", "error"); }
         }
 
-        // Remove habit from today's list and master list
-        async function removeHabit(objectId) { 
-            // Find the habit to get its master_id
-            const habitToRemove = habits.find(h => h.objectId === objectId);
-            if (!habitToRemove) return;
-
-            // Confirm deletion
-            if (!confirm("Are you sure you want to delete this habit? This will remove it from today's list and the master list.")) {
-                return;
+        // Add selected habit from master list to today's list
+        async function addSelectedHabitToToday(masterHabitObjectId) {
+            const habitToAdd = allHabits.find(h => h.objectId === masterHabitObjectId);
+            if (habitToAdd) {
+                // Check if this habit (based on master_id) already exists in today's list
+                if (!habits.some(h => h.master_id === masterHabitObjectId && h.habit_date === getTodayDateString())) {
+                    const dailyPayload = { 
+                        master_id: masterHabitObjectId, 
+                        ownerId: userId, 
+                        name: habitToAdd.name, 
+                        completed: false, 
+                        habit_date: getTodayDateString() 
+                    };
+                    try { 
+                        const newDaily = await Backendless.Data.of('DailyHabits').save(dailyPayload); 
+                        habits.push(newDaily); 
+                        updateCurrentDayStats(); 
+                        showMessage("Added to today's habits!", "success"); 
+                        renderApp(); 
+                    }
+                    catch (e) { console.error("Error adding selected habit to today:", e); showMessage("Error adding habit to today.", "error"); }
+                } else showMessage("This habit is already in today's list!", "info");
             }
+        }
 
+        // Toggle habit completion status
+        async function toggleHabit(objectId) {
+            const idx = habits.findIndex(h => h.objectId === objectId);
+            if (idx > -1) {
+                const newStatus = !habits[idx].completed; 
+                try { 
+                    await Backendless.Data.of('DailyHabits').save({ objectId: objectId, completed: newStatus }); // Save to Backendless
+                    habits[idx].completed = newStatus; // Update locally
+                    updateCurrentDayStats(); // Update stats
+                    renderApp(); // Re-render
+                }
+                catch (e) { 
+                    console.error("Error toggling habit:", e); 
+                    showMessage("Error updating habit status.", "error"); 
+                }
+            }
+        }
+
+        // Remove habit from today's list
+        async function removeHabit(objectId) { 
             try { 
-                // Remove from DailyHabits
                 await Backendless.Data.of('DailyHabits').remove({ objectId }); 
                 habits = habits.filter(h => h.objectId !== objectId); 
-
-                // Remove from AllHabits (master list)
-                await Backendless.Data.of('AllHabits').remove({ objectId: habitToRemove.master_id });
-                allHabits = allHabits.filter(h => h.objectId !== habitToRemove.master_id);
-
-                showMessage("Habit removed.", "success"); 
+                updateCurrentDayStats(); 
+                showMessage("Habit removed from today.", "success"); 
                 renderApp(); 
             }
-            catch (e) { console.error("Error deleting habit:", e); showMessage("Error deleting habit.", "error"); }
+            catch (e) { console.error("Error removing daily habit:", e); showMessage("Error removing habit.", "error"); }
+        }
+
+        // Remove habit from master list (AllHabits)
+        async function removeMasterHabit(objectId) { 
+             if (!confirm("Are you sure you want to delete this habit from the master list? This action will also remove this habit from your habit history (if any).")) {
+                 return;
+             }
+            try { 
+                await Backendless.Data.of('AllHabits').remove({ objectId }); 
+                allHabits = allHabits.filter(h => h.objectId !== objectId); 
+                // Optional: Remove this habit from today's list if present
+                const wasInToday = habits.some(h => h.master_id === objectId);
+                habits = habits.filter(h => h.master_id !== objectId);
+                if (wasInToday) updateCurrentDayStats();
+
+                showMessage("Habit removed from master list.", "success"); 
+                renderApp(); 
+            }
+            catch (e) { console.error("Error removing master habit:", e); showMessage("Error removing habit from master list.", "error"); }
         }
 
 
@@ -1421,7 +1504,7 @@
             try {
                 isLoading = true; 
                 document.getElementById('loading-overlay').style.display = 'flex';
-                lucide.createIcons(); // Initial icon creation
+                lucide.createIcons(); // Create initial icons
 
                 const currentUser = await Backendless.UserService.getCurrentUser(); // Check if user is logged in
                 if (currentUser) {
@@ -1457,36 +1540,27 @@
                 }
             }
 
-            // Attach event listeners for signup, signin buttons
+            // Assign events for signup, signin buttons
             document.getElementById('signup-btn').addEventListener('click', handleSignUp);
             document.getElementById('signin-btn').addEventListener('click', handleSignIn);
             
-            // Attach event listeners for workout sub-tabs
-            ['today', 'my-workouts', 'stats'].forEach(tab => {
+            // Assign events for bottom nav tabs
+            ['workout', 'habit', 'stats'].forEach(tab => {
                 const btn = document.getElementById(`${tab}-tab-btn`);
                 if(btn) btn.addEventListener('click', () => {
-                    currentWorkoutSubTab = tab; 
-                    showAddWorkoutFormToday = false; // Reset form state when changing tabs
+                    currentTab = tab; 
+                    showAddWorkoutFormToday = false; // Reset form state when switching tabs
                     showAddWorkoutFormMyWorkouts = false; 
+                    showAddHabitFormToday = false; // Reset habit form state
                     renderApp();
                 });
             });
 
-            // Attach event listeners for main navigation tabs
-            document.getElementById('nav-workout-btn').addEventListener('click', () => {
-                currentMainTab = 'workout';
-                renderApp();
-            });
-            document.getElementById('nav-habit-btn').addEventListener('click', () => {
-                currentMainTab = 'habit';
-                renderApp();
-            });
-
-            // Attach event listener for closing workout detail modal
+            // Assign event for close modal button
             const closeModalButton = document.getElementById('close-workout-detail-modal');
             if(closeModalButton) closeModalButton.addEventListener('click', closeWorkoutDetailsModal);
             
-            // Attach event listener for closing modal when clicking outside (on overlay)
+            // Assign event to close modal when clicking outside (on overlay)
             const modalOverlay = document.getElementById('workout-detail-modal');
             if(modalOverlay) modalOverlay.addEventListener('click', (e) => { 
                 if (e.target === e.currentTarget) closeWorkoutDetailsModal(); // Only close if clicking directly on overlay
@@ -1497,7 +1571,7 @@
                  lucide.createIcons();
             }
         });
-        // Re-create icons on window resize (to ensure correct display)
+        // Re-create icons when window resizes (to ensure correct display)
         window.addEventListener('resize', () => { lucide.createIcons(); }); 
     </script>
 </body>
