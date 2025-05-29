@@ -56,45 +56,6 @@
             transform: translateY(0);
             opacity: 1;
         }
-
-        /* Bottom navigation bar styles */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            backdrop-filter: blur(10px); /* Blur effect */
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100;
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-        }
-        .bottom-nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            padding: 0.75rem 0.5rem;
-            color: #9ca3af; /* gray-400 */
-            font-size: 0.75rem; /* text-xs */
-            font-weight: 500; /* font-medium */
-            transition: color 0.2s ease, background-color 0.2s ease;
-            border-radius: 0.5rem; /* rounded-lg */
-        }
-        .bottom-nav-btn.active {
-            color: #fff;
-            background-color: rgba(168, 85, 247, 0.2); /* purple-500/20 */
-        }
-        .bottom-nav-btn:hover:not(.active) {
-            color: #fff;
-            background-color: rgba(255, 255, 255, 0.1); /* white/10 */
-        }
-        .bottom-nav-btn i {
-            margin-bottom: 0.25rem;
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white font-inter">
@@ -138,7 +99,7 @@
                             <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                                 Fitness Tracker
                             </h1>
-                            <p class="text-xs text-gray-400">Theo dõi tập luyện và thói quen hàng ngày</p>
+                            <p class="text-xs text-gray-400">Theo dõi tập luyện hàng ngày</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -146,26 +107,23 @@
                         <div class="text-xs text-gray-400">Thời gian hiện tại</div>
                     </div>
                 </div>
+
+                <div class="flex bg-gray-800/50 rounded-xl p-1">
+                    <button id="today-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Hôm nay
+                    </button>
+                    <button id="my-workouts-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Bài tập của tôi
+                    </button>
+                    <button id="stats-tab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
+                        Thống kê
+                    </button>
+                </div>
             </div>
         </div>
 
         <div id="main-content" class="px-4 py-4 pb-20">
             </div>
-
-        <div class="bottom-nav">
-            <button id="workout-tab-btn" class="bottom-nav-btn active">
-                <i data-lucide="dumbbell" class="w-5 h-5"></i>
-                <span>Bài tập</span>
-            </button>
-            <button id="habit-tab-btn" class="bottom-nav-btn">
-                <i data-lucide="check-square" class="w-5 h-5"></i>
-                <span>Thói quen</span>
-            </button>
-            <button id="stats-tab-btn" class="bottom-nav-btn">
-                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
-                <span>Thống kê</span>
-            </button>
-        </div>
 
         <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" style="display: none;">
             <div class="text-center">
@@ -244,52 +202,45 @@
     </div>
 
     <script>
-        // Global state variables
-        let workouts = []; // Daily workouts
-        let allWorkouts = []; // Master list of all workouts
-        let habits = []; // Daily habits
-        let allHabits = []; // Master list of all habits
-        let streak = 0; // Workout streak
-        let totalWorkouts = 0; // Total completed workouts
-        let weeklyStats = []; // Weekly workout stats
-        let habitStreak = 0; // Habit streak
-        let totalHabitsCompleted = 0; // Total completed habits
-        let weeklyHabitStats = []; // Weekly habit stats
+        // Biến trạng thái toàn cục
+        let workouts = []; // Bài tập hàng ngày
+        let allWorkouts = []; // Danh sách tất cả bài tập (master list)
+        let streak = 0; // Chuỗi ngày tập luyện liên tiếp
+        let totalWorkouts = 0; // Tổng số bài tập đã hoàn thành
+        let weeklyStats = []; // Thống kê hàng tuần
+        let currentTab = 'today'; // Tab hiện tại đang được chọn
+        let showAddWorkoutFormToday = false; // Hiển thị form thêm bài tập ở tab "Hôm nay"
+        let showAddWorkoutFormMyWorkouts = false; // Hiển thị form thêm bài tập ở tab "Bài tập của tôi"
+        let isLoading = true; // Trạng thái tải dữ liệu
 
-        let currentTab = 'workout'; // Current selected tab (changed from 'today' to 'workout')
-        let showAddWorkoutFormToday = false; // Show add workout form in 'Today' tab
-        let showAddWorkoutFormMyWorkouts = false; // Show add workout form in 'My Workouts' tab
-        let showAddHabitFormToday = false; // Show add habit form in 'Habit' tab
-        let isLoading = true; // Loading state
+        let currentDayString = new Date().toISOString().split('T')[0]; // Ngày hiện tại dạng YYYY-MM-DD
+        let streakLastAchievedDate = null; // Ngày cuối cùng đạt được streak
 
-        let currentDayString = new Date().toISOString().split('T')[0]; // Current date in YYYY-MM-DD format
-        let streakLastAchievedDate = null; // Last date workout streak was achieved
-        let habitStreakLastAchievedDate = null; // Last date habit streak was achieved
+        const MAX_WEEKLY_STATS_DAYS = 30; // Số ngày tối đa lưu trữ trong thống kê tuần
+        const MODAL_WEIGHT_ADJUST_STEP = 2.5; // Bước nhảy khi điều chỉnh tạ trong modal
 
-        const MAX_WEEKLY_STATS_DAYS = 30; // Max days to store in weekly stats
-        const MODAL_WEIGHT_ADJUST_STEP = 2.5; // Weight adjustment step in modal
 
-        // Backendless keys - REPLACE WITH YOUR KEYS
+        // Khóa Backendless - THAY THẾ BẰNG KHÓA CỦA BẠN
         const BACKENDLESS_APP_ID = 'E1DD6501-EFB3-4E39-BED7-597DE3133D98'; 
         const BACKENDLESS_JS_API_KEY = '8983A173-7621-4F13-924C-3C17494E74EA'; 
 
         Backendless.initApp(BACKENDLESS_APP_ID, BACKENDLESS_JS_API_KEY);
 
-        let userId = null; // User ID after login
+        let userId = null; // ID của người dùng sau khi đăng nhập
 
-        // Get current date string in YYYY-MM-DD format
+        // Lấy ngày hiện tại dưới dạng chuỗi YYYY-MM-DD
         function getTodayDateString() {
             return new Date().toISOString().split('T')[0];
         }
 
-        // Display message
+        // Hiển thị thông báo
         function showMessage(message, type = 'info') {
             const messageArea = document.getElementById('message-area');
             messageArea.textContent = message;
             messageArea.className = `fixed top-0 left-1/2 -translate-x-1/2 mt-4 z-50 p-3 rounded-lg text-white text-center shadow-lg transition-all duration-300 transform opacity-100 ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' :
-                'bg-blue-500' // Default to blue for 'info'
+                'bg-blue-500' // Mặc định là màu xanh dương cho 'info'
             }`;
             messageArea.style.transform = 'translateY(0)';
             messageArea.style.opacity = '1';
@@ -297,10 +248,10 @@
             setTimeout(() => {
                 messageArea.style.transform = 'translateY(-100%)';
                 messageArea.style.opacity = '0';
-            }, 3000); // Message disappears after 3 seconds
+            }, 3000); // Thông báo tự biến mất sau 3 giây
         }
 
-        // Update live date and time
+        // Cập nhật đồng hồ và ngày tháng trực tiếp
         function updateLiveDateTime() {
             const currentDateElement = document.getElementById('current-date');
             if (currentDateElement) {
@@ -319,13 +270,13 @@
             }
         }
 
-        // Load data from Backendless
+        // Tải dữ liệu từ Backendless
         async function loadDataFromBackendless() {
             isLoading = true;
             document.getElementById('loading-overlay').style.display = 'flex';
-            // Ensure loader icon is rendered if not already
+            // Đảm bảo icon loader được render nếu chưa có
             if (document.querySelector('#loading-overlay [data-lucide="loader-2"]')) { 
-                 lucide.createIcons(); // Re-create icon if needed
+                 lucide.createIcons(); // Tạo lại icon nếu cần
             }
 
             if (!userId) {
@@ -336,29 +287,20 @@
             }
 
             try {
-                // Load daily workouts for the current user and date
+                // Tải bài tập hàng ngày của người dùng cho ngày hôm nay
                 const dailyWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create()
                     .setWhereClause(`ownerId = '${userId}' AND workout_date = '${getTodayDateString()}'`);
                 const dailyWorkoutsData = await Backendless.Data.of('DailyWorkouts').find(dailyWorkoutsQueryBuilder);
                 workouts = dailyWorkoutsData || [];
 
-                // Load master list of all workouts
+                // Tải danh sách tất cả bài tập (master list)
                 const allWorkoutsQueryBuilder = Backendless.DataQueryBuilder.create(); 
+                // Nếu AllWorkouts là của riêng người dùng, thêm: .setWhereClause(`ownerId = '${userId}'`) 
+                // Ví dụ này giả định AllWorkouts là chung, hoặc bạn sẽ thêm ownerId khi tạo chúng nếu cần.
                 const allWorkoutsData = await Backendless.Data.of('AllWorkouts').find(allWorkoutsQueryBuilder);
                 allWorkouts = allWorkoutsData || [];
 
-                // Load daily habits for the current user and date
-                const dailyHabitsQueryBuilder = Backendless.DataQueryBuilder.create()
-                    .setWhereClause(`ownerId = '${userId}' AND habit_date = '${getTodayDateString()}'`);
-                const dailyHabitsData = await Backendless.Data.of('DailyHabits').find(dailyHabitsQueryBuilder);
-                habits = dailyHabitsData || [];
-
-                // Load master list of all habits
-                const allHabitsQueryBuilder = Backendless.DataQueryBuilder.create();
-                const allHabitsData = await Backendless.Data.of('AllHabits').find(allHabitsQueryBuilder);
-                allHabits = allHabitsData || [];
-
-                // Load user stats
+                // Tải thống kê người dùng
                 const userStatsQueryBuilder = Backendless.DataQueryBuilder.create()
                     .setWhereClause(`ownerId = '${userId}'`);
                 const userStatsData = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
@@ -369,42 +311,32 @@
                     totalWorkouts = userStats.total_workouts || 0;
                     weeklyStats = userStats.weekly_stats ? JSON.parse(userStats.weekly_stats) : [];
                     streakLastAchievedDate = userStats.streak_last_achieved_date;
-                    
-                    habitStreak = userStats.habit_streak || 0;
-                    totalHabitsCompleted = userStats.total_habits_completed || 0;
-                    weeklyHabitStats = userStats.weekly_habit_stats ? JSON.parse(userStats.weekly_habit_stats) : [];
-                    habitStreakLastAchievedDate = userStats.habit_streak_last_achieved_date;
                 } else {
-                    // If no stats, create new
-                    const newUserStats = { 
-                        ownerId: userId, 
-                        streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]),
-                        habit_streak: 0, total_habits_completed: 0, weekly_habit_stats: JSON.stringify([])
-                    };
+                    // Nếu không có thống kê, tạo mới
+                    const newUserStats = { ownerId: userId, streak: 0, total_workouts: 0, weekly_stats: JSON.stringify([]) };
                     await Backendless.Data.of('UserStats').save(newUserStats);
                 }
             } catch (error) {
-                console.error("Error loading data from Backendless:", error);
-                showMessage(`Error loading data: ${error.message}. Please try again.`, "error");
-                // Reset to default state if error occurs
+                console.error("Lỗi khi tải dữ liệu từ Backendless:", error);
+                showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Vui lòng thử lại.`, "error");
+                // Reset về trạng thái mặc định nếu có lỗi
                 workouts = []; allWorkouts = []; streak = 0; totalWorkouts = 0; weeklyStats = []; streakLastAchievedDate = null;
-                habits = []; allHabits = []; habitStreak = 0; totalHabitsCompleted = 0; weeklyHabitStats = []; habitStreakLastAchievedDate = null;
             } finally {
                 isLoading = false;
                 document.getElementById('loading-overlay').style.display = 'none';
             }
         }
 
-        // Save user stats to Backendless
-        async function saveDataToBackendless() { // This function specifically saves UserStats
+        // Lưu dữ liệu thống kê người dùng lên Backendless
+        async function saveDataToBackendless() { // Hàm này cụ thể lưu UserStats
             if (!userId) {
-                showMessage("Error: You need to be logged in to save data.", "error");
+                showMessage("Lỗi: Bạn cần đăng nhập để lưu dữ liệu.", "error");
                 return;
             }
-            const saveButton = document.getElementById('save-data-to-sheet-btn'); // Assuming this button exists
+            const saveButton = document.getElementById('save-data-to-sheet-btn'); // Giả sử có nút này
             const originalButtonHtml = saveButton ? saveButton.innerHTML : '';
             if (saveButton) {
-                saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Saving...</span>';
+                saveButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden sm:inline">Đang lưu...</span>';
                 saveButton.disabled = true;
                 lucide.createIcons();
             }
@@ -414,339 +346,193 @@
                 const existingUserStats = await Backendless.Data.of('UserStats').find(userStatsQueryBuilder);
                 let userStatsToSave = {
                     streak: streak, total_workouts: totalWorkouts,
-                    weekly_stats: JSON.stringify(weeklyStats), // Convert array to JSON string
-                    streak_last_achieved_date: streakLastAchievedDate,
-                    habit_streak: habitStreak, total_habits_completed: totalHabitsCompleted,
-                    weekly_habit_stats: JSON.stringify(weeklyHabitStats), // Convert array to JSON string
-                    habit_streak_last_achieved_date: habitStreakLastAchievedDate
+                    weekly_stats: JSON.stringify(weeklyStats), // Chuyển mảng thành chuỗi JSON
+                    streak_last_achieved_date: streakLastAchievedDate
                 };
                 if (existingUserStats && existingUserStats.length > 0) {
-                    userStatsToSave.objectId = existingUserStats[0].objectId; // Update existing record
+                    userStatsToSave.objectId = existingUserStats[0].objectId; // Cập nhật bản ghi hiện có
                 } else {
-                    userStatsToSave.ownerId = userId; // Create new record if none exists
+                    userStatsToSave.ownerId = userId; // Tạo bản ghi mới nếu chưa có
                 }
                 await Backendless.Data.of('UserStats').save(userStatsToSave);
-                if (saveButton) showMessage("Stats data saved!", "success");
+                if (saveButton) showMessage("Dữ liệu thống kê đã được lưu!", "success");
             } catch (error) {
-                console.error("Error sending UserStats to Backendless:", error);
-                showMessage(`Error saving stats data: ${error.message}.`, "error");
+                console.error("Lỗi khi gửi UserStats đến Backendless:", error);
+                showMessage(`Lỗi khi lưu dữ liệu thống kê: ${error.message}.`, "error");
             } finally {
                 if (saveButton) {
-                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Save data</span>'; // Restore button
+                    saveButton.innerHTML = originalButtonHtml || '<i data-lucide="save" class="w-4 h-4"></i> <span class="hidden sm:inline">Lưu dữ liệu</span>'; // Khôi phục nút
                     saveButton.disabled = false;
                     lucide.createIcons();
                 }
             }
         }
         
-        // Initialize app and handle daily rollover
+        // Khởi tạo ứng dụng và xử lý khi qua ngày mới
         function initializeAppAndHandleDailyRollover() {
             const todayStr = getTodayDateString();
-            if (currentDayString !== todayStr) { // If a new day has passed
-                // Calculate old day's workout stats
-                const pastDayWorkoutCompletions = workouts.filter(w => w.completed).length;
-                const pastDayTotalWorkouts = workouts.length;
+            if (currentDayString !== todayStr) { // Nếu đã qua ngày mới
+                // Tính toán số liệu của ngày cũ (currentDayString)
+                const pastDayActualCompletions = workouts.filter(w => w.completed).length;
+                const pastDayTotalTasks = workouts.length;
 
-                // Find if old day already exists in weeklyStats
-                const lastDayWorkoutStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+                // Tìm xem ngày cũ đã có trong weeklyStats chưa
+                const lastDayStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
 
-                // If old day is yesterday of current day (todayStr)
-                if (lastDayWorkoutStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
-                    // Update stats for yesterday if it exists
-                    weeklyStats[lastDayWorkoutStatIndex].total = pastDayTotalWorkouts;
-                    weeklyStats[lastDayWorkoutStatIndex].completed = pastDayWorkoutCompletions;
-                    weeklyStats[lastDayWorkoutStatIndex].exercises = workouts.map(w => w.name); // Save names of completed workouts
-                } else if (pastDayTotalWorkouts > 0 || pastDayWorkoutCompletions > 0) { // If not yesterday, but has data, add new
+                // Nếu ngày cũ là ngày hôm qua của ngày hiện tại (todayStr)
+                if (lastDayStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
+                    // Cập nhật số liệu cho ngày hôm qua nếu nó đã tồn tại
+                    weeklyStats[lastDayStatIndex].total = pastDayTotalTasks;
+                    weeklyStats[lastDayStatIndex].completed = pastDayActualCompletions;
+                    weeklyStats[lastDayStatIndex].exercises = workouts.map(w => w.name); // Lưu tên các bài tập đã làm
+                } else if (pastDayTotalTasks > 0 || pastDayActualCompletions > 0) { // Nếu không phải hôm qua, nhưng có dữ liệu, thì thêm mới
                      weeklyStats.push({
-                        date: currentDayString, total: pastDayTotalWorkouts,
-                        completed: pastDayWorkoutCompletions, exercises: workouts.map(w => w.name)
+                        date: currentDayString, total: pastDayTotalTasks,
+                        completed: pastDayActualCompletions, exercises: workouts.map(w => w.name)
                     });
                 }
 
-                // Sort weeklyStats by date descending and limit number of days
+                // Sắp xếp lại weeklyStats theo ngày giảm dần và giới hạn số ngày
                 weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date));
                 if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS);
 
-                // Update workout streak
-                if (pastDayTotalWorkouts > 0 && pastDayWorkoutCompletions === pastDayTotalWorkouts) { // All workouts completed on old day
+                // Cập nhật streak
+                if (pastDayTotalTasks > 0 && pastDayActualCompletions === pastDayTotalTasks) { // Hoàn thành tất cả bài tập ngày cũ
                     if (streakLastAchievedDate) {
-                        const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Expected previous streak date
-                        if (streakLastAchievedDate === expectedPrevStreakDate) streak++; else streak = 1; // Reset streak if not consecutive
-                    } else streak = 1; // Start new streak
-                    streakLastAchievedDate = currentDayString; // Save streak achievement date
+                        const expectedPrevStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Ngày streak dự kiến trước đó
+                        if (streakLastAchievedDate === expectedPrevStreakDate) streak++; else streak = 1; // Reset streak nếu không liên tục
+                    } else streak = 1; // Bắt đầu streak mới
+                    streakLastAchievedDate = currentDayString; // Lưu ngày đạt streak
                 } else {
-                    // If old day is yesterday and not all completed, reset streak
+                    // Nếu ngày cũ là hôm qua và không hoàn thành hết, reset streak
                     const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
-                    if (currentDayString === yesterdayStr && pastDayTotalWorkouts > 0) { // Only reset if there were workouts yesterday
+                    if (currentDayString === yesterdayStr && pastDayTotalTasks > 0) { // Chỉ reset nếu có bài tập vào ngày hôm qua
                         streak = 0; 
-                        streakLastAchievedDate = null; // Reset streak date
+                        streakLastAchievedDate = null; // Reset ngày streak
                     }
-                    // If not yesterday, do nothing with streak (avoid accidental reset)
+                    // Nếu không phải hôm qua, không làm gì với streak (tránh reset oan)
                 }
-
-                // Calculate old day's habit stats
-                const pastDayHabitCompletions = habits.filter(h => h.completed).length;
-                const pastDayTotalHabits = habits.length;
-
-                // Find if old day already exists in weeklyHabitStats
-                const lastDayHabitStatIndex = weeklyHabitStats.findIndex(s => s.date === currentDayString);
-
-                // If old day is yesterday of current day (todayStr)
-                if (lastDayHabitStatIndex > -1 && new Date(currentDayString).toDateString() === new Date(new Date(todayStr).getTime() - 86400000).toDateString()) {
-                    // Update stats for yesterday if it exists
-                    weeklyHabitStats[lastDayHabitStatIndex].total = pastDayTotalHabits;
-                    weeklyHabitStats[lastDayHabitStatIndex].completed = pastDayHabitCompletions;
-                    weeklyHabitStats[lastDayHabitStatIndex].habits = habits.map(h => h.name); // Save names of completed habits
-                } else if (pastDayTotalHabits > 0 || pastDayHabitCompletions > 0) { // If not yesterday, but has data, add new
-                     weeklyHabitStats.push({
-                        date: currentDayString, total: pastDayTotalHabits,
-                        completed: pastDayHabitCompletions, habits: habits.map(h => h.name)
-                    });
-                }
-
-                // Sort weeklyHabitStats by date descending and limit number of days
-                weeklyHabitStats.sort((a, b) => new Date(b.date) - new Date(a.date));
-                if (weeklyHabitStats.length > MAX_WEEKLY_STATS_DAYS) weeklyHabitStats = weeklyHabitStats.slice(0, MAX_WEEKLY_STATS_DAYS);
-
-                // Update habit streak
-                if (pastDayTotalHabits > 0 && pastDayHabitCompletions === pastDayTotalHabits) { // All habits completed on old day
-                    if (habitStreakLastAchievedDate) {
-                        const expectedPrevHabitStreakDate = new Date(new Date(currentDayString).getTime() - 86400000).toISOString().split('T')[0]; // Expected previous streak date
-                        if (habitStreakLastAchievedDate === expectedPrevHabitStreakDate) habitStreak++; else habitStreak = 1; // Reset streak if not consecutive
-                    } else habitStreak = 1; // Start new streak
-                    habitStreakLastAchievedDate = currentDayString; // Save streak achievement date
-                } else {
-                    // If old day is yesterday and not all completed, reset streak
-                    const yesterdayStr = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split('T')[0];
-                    if (currentDayString === yesterdayStr && pastDayTotalHabits > 0) { // Only reset if there were habits yesterday
-                        habitStreak = 0; 
-                        habitStreakLastAchievedDate = null; // Reset streak date
-                    }
-                }
-
-                workouts = []; // Reset workouts for new day
-                habits = []; // Reset habits for new day
-                currentDayString = todayStr; // Update current date
+                workouts = []; // Reset bài tập cho ngày mới
+                currentDayString = todayStr; // Cập nhật ngày hiện tại
             }
-            updateCurrentDayStats(); // Update stats for current day (could be new day or same day if not past midnight)
+            updateCurrentDayWeeklyStat(); // Cập nhật thống kê cho ngày hiện tại (có thể là ngày mới hoặc vẫn là ngày cũ nếu chưa qua 0h)
         }
 
-        // Update stats for the current day in weeklyStats and weeklyHabitStats
-        function updateCurrentDayStats() {
-            if (!currentDayString) return; // No current date yet
-
-            // Update workout stats for current day
-            const todayWorkoutCompletions = workouts.filter(w => w.completed).length;
-            const todayTotalWorkouts = workouts.length;
-            const todayWorkoutStatPayload = {
-                date: currentDayString, total: todayTotalWorkouts,
-                completed: todayWorkoutCompletions, exercises: workouts.map(w => w.name)
+        // Cập nhật thống kê cho ngày hiện tại trong weeklyStats
+        function updateCurrentDayWeeklyStat() {
+            if (!currentDayString) return; // Chưa có ngày hiện tại
+            const todayActualCompletions = workouts.filter(w => w.completed).length;
+            const todayTotalTasks = workouts.length;
+            const todayStatPayload = {
+                date: currentDayString, total: todayTotalTasks,
+                completed: todayActualCompletions, exercises: workouts.map(w => w.name)
             };
-            const existingWorkoutStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
-            if (existingWorkoutStatIndex > -1) weeklyStats[existingWorkoutStatIndex] = todayWorkoutStatPayload; // Update if exists
-            else weeklyStats.push(todayWorkoutStatPayload); // Add new if not exists
+            const existingStatIndex = weeklyStats.findIndex(s => s.date === currentDayString);
+            if (existingStatIndex > -1) weeklyStats[existingStatIndex] = todayStatPayload; // Cập nhật nếu đã có
+            else weeklyStats.push(todayStatPayload); // Thêm mới nếu chưa có
             
-            weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort
-            if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Limit days
+            weeklyStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sắp xếp lại
+            if (weeklyStats.length > MAX_WEEKLY_STATS_DAYS) weeklyStats = weeklyStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Giới hạn số ngày
 
-            // Update habit stats for current day
-            const todayHabitCompletions = habits.filter(h => h.completed).length;
-            const todayTotalHabits = habits.length;
-            const todayHabitStatPayload = {
-                date: currentDayString, total: todayTotalHabits,
-                completed: todayHabitCompletions, habits: habits.map(h => h.name)
-            };
-            const existingHabitStatIndex = weeklyHabitStats.findIndex(s => s.date === currentDayString);
-            if (existingHabitStatIndex > -1) weeklyHabitStats[existingHabitStatIndex] = todayHabitStatPayload; // Update if exists
-            else weeklyHabitStats.push(todayHabitStatPayload); // Add new if not exists
-            
-            weeklyHabitStats.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort
-            if (weeklyHabitStats.length > MAX_WEEKLY_STATS_DAYS) weeklyHabitStats = weeklyHabitStats.slice(0, MAX_WEEKLY_STATS_DAYS); // Limit days
-
-            saveDataToBackendless(); // Save user stats
+            saveDataToBackendless(); // Lưu lại thống kê người dùng
         }
 
-        // Utility functions to get workout stats
-        function getCompletedWorkoutCount() { return workouts.filter(w => w.completed).length; }
-        function getWorkoutCompletionRate() { const c = getCompletedWorkoutCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
-        function formatDate(dateString) { // Format date (e.g., Mon, 28/05)
+        // Các hàm tiện ích lấy thông tin thống kê
+        function getCompletedCount() { return workouts.filter(w => w.completed).length; }
+        function getCompletionRate() { const c = getCompletedCount(); return workouts.length > 0 ? Math.round((c / workouts.length) * 100) : 0; }
+        function formatDate(dateString) { // Định dạng ngày tháng (VD: T2, 28/05)
             const date = new Date(dateString); const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-            const localDate = new Date(date.getTime() + userTimezoneOffset); // Adjust timezone
+            const localDate = new Date(date.getTime() + userTimezoneOffset); // Điều chỉnh múi giờ
             return localDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', weekday: 'short' });
         }
-        function getWeeklyWorkoutAverage() { // Average completion rate for last 7 days
+        function getWeeklyAverage() { // Tỷ lệ hoàn thành trung bình 7 ngày gần nhất
             if (weeklyStats.length === 0) return 0; const relevantStats = weeklyStats.slice(0, 7);
             const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
             const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
             return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
         }
-        function getMostActiveWorkoutDay() { // Day with most completed workouts
+        function getMostActiveDay() { // Ngày hoàn thành nhiều bài tập nhất
             if (weeklyStats.length === 0) return 'Chưa có'; let maxCompleted = -1; let mostActiveDayData = null;
             for (const day of weeklyStats) { if (day.completed > maxCompleted) { maxCompleted = day.completed; mostActiveDayData = day; } }
             return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
         }
-        function getCurrentWeekTotalCompletedWorkouts() { const r = weeklyStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
+        function getCurrentWeekTotalCompleted() { const r = weeklyStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
 
-        // Utility functions to get habit stats
-        function getCompletedHabitCount() { return habits.filter(h => h.completed).length; }
-        function getHabitCompletionRate() { const c = getCompletedHabitCount(); return habits.length > 0 ? Math.round((c / habits.length) * 100) : 0; }
-        function getWeeklyHabitAverage() { // Average completion rate for last 7 days
-            if (weeklyHabitStats.length === 0) return 0; const relevantStats = weeklyHabitStats.slice(0, 7);
-            const totalCompleted = relevantStats.reduce((sum, day) => sum + day.completed, 0);
-            const totalPossible = relevantStats.reduce((sum, day) => sum + day.total, 0);
-            return totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
-        }
-        function getMostActiveHabitDay() { // Day with most completed habits
-            if (weeklyHabitStats.length === 0) return 'Chưa có'; let maxCompleted = -1; let mostActiveDayData = null;
-            for (const day of weeklyHabitStats) { if (day.completed > maxCompleted) { maxCompleted = day.completed; mostActiveDayData = day; } }
-            return mostActiveDayData && maxCompleted > 0 ? formatDate(mostActiveDayData.date) : 'Chưa có';
-        }
-        function getCurrentWeekTotalCompletedHabits() { const r = weeklyHabitStats.slice(0, 7); return r.reduce((s, d) => s + d.completed, 0); }
-
-
-        // Render header (tabs) - Now using bottom navigation
-        function renderBottomNav() {
-            document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`${currentTab}-tab-btn`).classList.add('active');
+        // Render header (tabs)
+        function renderHeader() {
+            const todayTabBtn = document.getElementById('today-tab-btn');
+            const myWorkoutsTabBtn = document.getElementById('my-workouts-tab-btn');
+            const statsTabBtn = document.getElementById('stats-tab-btn');
+            const baseClass = "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all";
+            const activeClass = "bg-gradient-to-r from-purple-500 to-pink-500 text-white";
+            const inactiveClass = "text-gray-400 hover:text-white";
+            todayTabBtn.className = `${baseClass} ${currentTab === 'today' ? activeClass : inactiveClass}`;
+            myWorkoutsTabBtn.className = `${baseClass} ${currentTab === 'my-workouts' ? activeClass : inactiveClass}`;
+            statsTabBtn.className = `${baseClass} ${currentTab === 'stats' ? activeClass : inactiveClass}`;
         }
 
-        // Render content for "Workout" tab (formerly "Today" and "My Workouts")
-        function renderWorkoutTab() {
+        // Render nội dung tab "Hôm nay"
+        function renderTodayTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
-                <div class="flex bg-gray-800/50 rounded-xl p-1 mb-6">
-                    <button id="today-workout-subtab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
-                        Hôm nay
-                    </button>
-                    <button id="my-workouts-subtab-btn" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all">
-                        Bài tập của tôi
-                    </button>
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${getCompletedCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
+                        <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${streak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
+                        <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
+                        <p class="text-xl font-bold">${getCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
+                    </div>
                 </div>
-                <div id="workout-subtab-content"></div>
-            `;
-            // Set initial sub-tab and render its content
-            let currentWorkoutSubTab = 'today-workout'; // Default sub-tab
-            function renderWorkoutSubTabContent() {
-                const subTabContent = document.getElementById('workout-subtab-content');
-                const todayBtn = document.getElementById('today-workout-subtab-btn');
-                const myWorkoutsBtn = document.getElementById('my-workouts-subtab-btn');
-                const baseClass = "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all";
-                const activeClass = "bg-gradient-to-r from-purple-500 to-pink-500 text-white";
-                const inactiveClass = "text-gray-400 hover:text-white";
-
-                todayBtn.className = `${baseClass} ${currentWorkoutSubTab === 'today-workout' ? activeClass : inactiveClass}`;
-                myWorkoutsBtn.className = `${baseClass} ${currentWorkoutSubTab === 'my-workouts' ? activeClass : inactiveClass}`;
-
-                if (currentWorkoutSubTab === 'today-workout') {
-                    subTabContent.innerHTML = `
-                        <div class="grid grid-cols-3 gap-3 mb-6">
-                            <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
-                                <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
-                                <p class="text-xl font-bold">${getCompletedWorkoutCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
-                            </div>
-                            <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
-                                <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
-                                <p class="text-xl font-bold">${streak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
-                            </div>
-                            <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
-                                <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
-                                <p class="text-xl font-bold">${getWorkoutCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
+                    <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ hôm nay</h3><span class="text-sm text-gray-400">${getCompletedCount()}/${workouts.length}</span></div>
+                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getCompletionRate()}%"></div></div>
+                    <p class="text-xs text-gray-400 text-center">${getCompletionRate() === 100 && workouts.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả bài tập!' : workouts.length > 0 ? `Còn ${workouts.length - getCompletedCount()} bài tập nữa` : 'Thêm bài tập cho hôm nay!'}</p>
+                </div>
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Bài tập hôm nay</h2>
+                            <div class="flex space-x-2">
+                                <button id="save-data-to-sheet-btn" class="flex items-center space-x-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                    <i data-lucide="save" class="w-4 h-4"></i><span class="hidden sm:inline">Lưu dữ liệu</span>
+                                </button>
+                                <button id="add-workout-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                                    <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm</span>
+                                </button>
                             </div>
                         </div>
-                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
-                            <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ hôm nay</h3><span class="text-sm text-gray-400">${getCompletedWorkoutCount()}/${workouts.length}</span></div>
-                            <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getWorkoutCompletionRate()}%"></div></div>
-                            <p class="text-xs text-gray-400 text-center">${getWorkoutCompletionRate() === 100 && workouts.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả bài tập!' : workouts.length > 0 ? `Còn ${workouts.length - getCompletedWorkoutCount()} bài tập nữa` : 'Thêm bài tập cho hôm nay!'}</p>
+                    </div>
+                    <div id="add-new-workout-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormToday ? 'block' : 'none'};">
+                        <div class="flex justify-end mb-3"><button id="close-add-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="number" id="new-workout-sets-today" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <input type="number" id="new-workout-reps-today" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <input type="number" id="new-workout-weight-today" placeholder="Tạ (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                            <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
                         </div>
-                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                            <div class="p-4 border-b border-white/10">
-                                <div class="flex items-center justify-between">
-                                    <h2 class="text-lg font-bold">Bài tập hôm nay</h2>
-                                    <div class="flex space-x-2">
-                                        <button id="save-data-to-sheet-btn" class="flex items-center space-x-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                            <i data-lucide="save" class="w-4 h-4"></i><span class="hidden sm:inline">Lưu dữ liệu</span>
-                                        </button>
-                                        <button id="add-workout-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                            <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="add-new-workout-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormToday ? 'block' : 'none'};">
-                                <div class="flex justify-end mb-3"><button id="close-add-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <input type="text" id="new-workout-name-today" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                                    <input type="number" id="new-workout-sets-today" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                                    <input type="number" id="new-workout-reps-today" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                                    <input type="number" id="new-workout-weight-today" placeholder="Tạ (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                                    <input type="text" id="new-workout-image-url-today" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                                </div>
-                                <div class="flex space-x-3 mt-3"><button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
-                            </div>
-                            <div id="workout-list-container" class="p-4 space-y-3"></div>
-                        </div>
-                    `;
-                    // Assign events for buttons
-                    document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderWorkoutSubTabContent(); };
-                    document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
-                    if (showAddWorkoutFormToday) {
-                        document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderWorkoutSubTabContent(); };
-                        document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
-                    }
-                    renderWorkoutItems(); // Render workout list
-                } else { // 'my-workouts' sub-tab
-                    subTabContent.innerHTML = `
-                        <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                            <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
-                                <h2 class="text-lg font-bold">Tất cả bài tập của tôi</h2>
-                                <button id="add-workout-my-workouts-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                    <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm bài tập mới</span>
-                                </button></div></div>
-                            <div id="add-new-workout-form-my-workouts" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormMyWorkouts ? 'block' : 'none'};">
-                                <div class="flex justify-end mb-3"><button id="close-add-form-my-workouts-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                                    <input type="number" id="new-workout-sets-my-workouts" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                                    <input type="number" id="new-workout-reps-my-workouts" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
-                                    <input type="number" id="new-workout-default-weight-my-workouts" placeholder="Tạ mặc định (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
-                                    <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
-                                </div>
-                                <div class="flex space-x-3 mt-3"><button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào danh sách chính</button></div>
-                            </div>
-                            <div id="all-workouts-list-container" class="p-4 space-y-3"></div>
-                        </div>
-                    `;
-                    // Assign events for buttons
-                    document.getElementById('add-workout-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = true; renderWorkoutSubTabContent(); };
-                    if (showAddWorkoutFormMyWorkouts) {
-                        document.getElementById('close-add-form-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = false; renderWorkoutSubTabContent(); };
-                        document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
-                    }
-                    renderAllWorkoutItems(); // Render all workout list
-                }
-                lucide.createIcons();
+                        <div class="flex space-x-3 mt-3"><button id="add-new-workout-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
+                    </div>
+                    <div id="workout-list-container" class="p-4 space-y-3"></div>
+                </div>`;
+            // Gán sự kiện cho các nút
+            document.getElementById('add-workout-today-btn').onclick = () => { showAddWorkoutFormToday = true; renderApp(); };
+            document.getElementById('save-data-to-sheet-btn').onclick = saveDataToBackendless; 
+            if (showAddWorkoutFormToday) {
+                document.getElementById('close-add-form-today-btn').onclick = () => { showAddWorkoutFormToday = false; renderApp(); };
+                document.getElementById('add-new-workout-today-btn').onclick = addNewWorkoutFromTodayTab;
             }
-
-            // Initial render of workout sub-tab content
-            renderWorkoutSubTabContent();
-
-            // Assign events for sub-tab buttons
-            document.getElementById('today-workout-subtab-btn').addEventListener('click', () => {
-                currentWorkoutSubTab = 'today-workout';
-                showAddWorkoutFormToday = false; // Reset form state
-                renderWorkoutSubTabContent();
-            });
-            document.getElementById('my-workouts-subtab-btn').addEventListener('click', () => {
-                currentWorkoutSubTab = 'my-workouts';
-                showAddWorkoutFormMyWorkouts = false; // Reset form state
-                renderWorkoutSubTabContent();
-            });
-            lucide.createIcons();
+            renderWorkoutItems(); // Render danh sách các bài tập
+            lucide.createIcons(); // Tạo icons
         }
 
-        // Render workout items in "Today" workout sub-tab
+        // Render các mục bài tập trong tab "Hôm nay"
         async function renderWorkoutItems() {
             const workoutListContainer = document.getElementById('workout-list-container');
             if (!workoutListContainer) return;
@@ -756,8 +542,8 @@
                 const workoutItem = document.createElement('div');
                 workoutItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${workout.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
                 
-                // Compare with previous workout
-                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Can add * weight if comparing volume with weight
+                // So sánh với lần tập trước
+                const currentVolume = (workout.num_sets || 0) * (workout.num_reps || 0); // Có thể thêm * weight nếu muốn so sánh volume có trọng lượng
                 const comparisonResult = await getPreviousWorkoutPerformance(workout.master_id, currentVolume);
                 let comparisonIcon = '', comparisonColor = 'text-gray-400';
                 if (comparisonResult === 'increased') { comparisonIcon = '<i data-lucide="arrow-up" class="w-4 h-4 text-green-400"></i>'; comparisonColor = 'text-green-400'; }
@@ -784,7 +570,7 @@
                     <button class="remove-workout-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${workout.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
                 workoutListContainer.appendChild(workoutItem);
             }
-            // Assign events for toggle, remove, and workout detail modal buttons
+            // Gán sự kiện cho các nút toggle, remove, và mở modal chi tiết
             document.querySelectorAll('.toggle-workout-btn').forEach(b => { b.onclick = (e) => toggleWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-workout-btn').forEach(b => { b.onclick = (e) => removeWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#workout-list-container .workout-details-trigger').forEach(el => {
@@ -793,30 +579,30 @@
             lucide.createIcons();
         }
 
-        // Get previous workout performance for comparison
+        // Lấy hiệu suất của bài tập trước đó để so sánh
         async function getPreviousWorkoutPerformance(masterId, currentVolume) {
-            if (!masterId) return 'no_data'; // No master_id, no history to compare
+            if (!masterId) return 'no_data'; // Không có master_id, không có lịch sử để so sánh
             const qb = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}' AND workout_date < '${getTodayDateString()}'`).setSortBy(['workout_date DESC']).setPageSize(1);
             const data = await Backendless.Data.of('DailyWorkouts').find(qb);
             if (data && data.length > 0) {
-                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); // Can add * weight if desired
+                const prevVol = (data[0].num_sets || 0) * (data[0].num_reps || 0); // Có thể thêm * weight nếu muốn
                 if (currentVolume > prevVol) return 'increased'; if (currentVolume < prevVol) return 'decreased'; return 'same';
-            } return 'no_data'; // No previous data
+            } return 'no_data'; // Không có dữ liệu trước đó
         }
         
-        // Utility function to re-assign listener to an element (avoids listener stacking)
+        // Hàm tiện ích để gán lại listener cho một element (tránh listener bị chồng chéo)
         function rebindListeners(elementId, newOnClick) {
             const originalElement = document.getElementById(elementId);
             if (!originalElement) return null;
-            const newElement = originalElement.cloneNode(true); // Clone element
-            originalElement.parentNode.replaceChild(newElement, originalElement); // Replace old element with new
+            const newElement = originalElement.cloneNode(true); // Sao chép element
+            originalElement.parentNode.replaceChild(newElement, originalElement); // Thay thế element cũ bằng element mới
             if (newOnClick) {
-                newElement.onclick = newOnClick; // Assign new listener
+                newElement.onclick = newOnClick; // Gán listener mới
             }
-            return newElement; // Return new element with listener assigned
+            return newElement; // Trả về element mới đã được gán listener
         }
 
-        // Show workout details modal
+        // Hiển thị modal chi tiết bài tập
         async function showWorkoutDetails(masterId, workoutName, imageUrl, currentWorkoutObjectId = null) {
             const modal = document.getElementById('workout-detail-modal');
             const modalWorkoutName = document.getElementById('modal-workout-name');
@@ -831,16 +617,16 @@
             const modalWorkoutHistory = document.getElementById('modal-workout-history');
 
             modalWorkoutName.textContent = workoutName;
-            // Handle image display or placeholder
+            // Xử lý hiển thị hình ảnh hoặc placeholder
             if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl.trim() === '') {
                 modalWorkoutImageContainer.innerHTML = `<div class="w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg"><i data-lucide="image" class="w-24 h-24 text-gray-400"></i></div>`;
             } else {
                 modalWorkoutImageContainer.innerHTML = `<img src="${imageUrl}" alt="Workout Image" class="w-full h-48 object-contain rounded-lg" onerror="this.onerror=null;this.parentElement.innerHTML = '<div class=\\'w-full h-48 flex items-center justify-center bg-gray-700 rounded-lg\\'><i data-lucide=\\'image-off\\' class=\\'w-24 h-24 text-gray-400\\'></i></div>'; lucide.createIcons();" />`;
             }
             
-            if (currentWorkoutObjectId) { // If opened from "Today" tab (has objectId of today's workout)
-                modalSetsRepsEditor.style.display = 'block'; // Show edit form
-                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'none'; // Hide history
+            if (currentWorkoutObjectId) { // Nếu mở từ tab "Hôm nay" (có objectId của bài tập hôm nay)
+                modalSetsRepsEditor.style.display = 'block'; // Hiển thị form chỉnh sửa
+                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'none'; // Ẩn lịch sử
 
                 const currentWorkout = workouts.find(w => w.objectId === currentWorkoutObjectId);
                 if (currentWorkout) {
@@ -848,12 +634,12 @@
                     modalRepsInput.value = currentWorkout.num_reps;
                     modalWeightInput.value = currentWorkout.weight_kg != null ? currentWorkout.weight_kg : 0;
                 } else {
-                    // Fallback if workout not found (rare)
+                    // Fallback nếu không tìm thấy workout (ít khi xảy ra)
                     modalSetsInput.value = 1; modalRepsInput.value = 1; modalWeightInput.value = 0;
                     console.warn(`Workout with objectId ${currentWorkoutObjectId} not found for modal editor.`);
                 }
 
-                // Re-assign listeners for +/- and Save buttons using rebindListeners to avoid issues
+                // Gán lại listeners cho các nút +/- và Lưu bằng rebindListeners để tránh lỗi
                 rebindListeners('sets-decrement-btn', () => {
                     const cv = parseInt(modalSetsInput.value); modalSetsInput.value = Math.max(1, (isNaN(cv) ? 2 : cv) - 1);
                 });
@@ -883,41 +669,41 @@
 
                     if (!isNaN(newSets) && !isNaN(newReps) && !isNaN(newWeight) && newSets > 0 && newReps > 0 && newWeight >= 0) {
                         updateWorkoutDetails(currentWorkoutObjectId, newSets, newReps, newWeight);
-                    } else { showMessage("Sets, Reps must be positive numbers and Weight must be non-negative!", "error"); }
+                    } else { showMessage("Sets, Reps phải là số dương và Tạ phải là số không âm!", "error"); }
                 });
 
-            } else { // If opened from "My Workouts" tab (only masterId, no objectId of today's workout)
-                modalSetsRepsEditor.style.display = 'none'; // Hide edit form
-                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'block'; // Show history
+            } else { // Nếu mở từ tab "Bài tập của tôi" (chỉ có masterId, không có objectId của bài tập hôm nay)
+                modalSetsRepsEditor.style.display = 'none'; // Ẩn form chỉnh sửa
+                if (modalWorkoutHistorySection) modalWorkoutHistorySection.style.display = 'block'; // Hiển thị lịch sử
                 if (!masterId) {
-                     modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">No master ID to load history.</p>';
+                     modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Không có master ID để tải lịch sử.</p>';
                 } else {
-                    // Load and display last 5 workout history entries for this workout
+                    // Tải và hiển thị lịch sử 5 lần tập gần nhất của bài tập này
                     const queryBuilder = Backendless.DataQueryBuilder.create().setWhereClause(`ownerId = '${userId}' AND master_id = '${masterId}'`).setSortBy(['workout_date DESC']).setPageSize(5);
                     try {
                         const historyData = await Backendless.Data.of('DailyWorkouts').find(queryBuilder);
-                        modalWorkoutHistory.innerHTML = ''; // Clear old history
+                        modalWorkoutHistory.innerHTML = ''; // Xóa lịch sử cũ
                         if (historyData && historyData.length > 0) {
                             historyData.forEach(entry => { 
                                 const item = document.createElement('div'); item.className = 'flex justify-between items-center bg-gray-800/50 p-3 rounded-lg';
                                 item.innerHTML = `<span class="text-sm font-medium">${formatDate(entry.workout_date)}</span><span class="text-sm text-gray-300">${entry.num_sets}x${entry.num_reps} @ ${entry.weight_kg != null ? entry.weight_kg : '0'}kg</span>`;
                                 modalWorkoutHistory.appendChild(item);
                             });
-                        } else { modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">No history yet.</p>'; }
+                        } else { modalWorkoutHistory.innerHTML = '<p class="text-center text-gray-400">Chưa có lịch sử.</p>'; }
                     } catch (error) {
-                        console.error("Error loading workout history:", error);
-                        modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Error loading history.</p>';
+                        console.error("Lỗi tải lịch sử bài tập:", error);
+                        modalWorkoutHistory.innerHTML = '<p class="text-center text-red-400">Lỗi tải lịch sử.</p>';
                     }
                 }
             }
-            modal.classList.add('open'); // Open modal
-            lucide.createIcons(); // Create icons
+            modal.classList.add('open'); // Mở modal
+            lucide.createIcons(); // Tạo icons
         }
 
-        // Close workout details modal
+        // Đóng modal chi tiết bài tập
         function closeWorkoutDetailsModal() { document.getElementById('workout-detail-modal').classList.remove('open'); }
 
-        // Update workout details (Sets, Reps, Weight)
+        // Cập nhật chi tiết bài tập (Sets, Reps, Tạ)
         async function updateWorkoutDetails(objectId, newSets, newReps, newWeight) {
             const workoutIndex = workouts.findIndex(w => w.objectId === objectId);
             if (workoutIndex > -1) {
@@ -926,28 +712,61 @@
                     num_sets: newSets, 
                     num_reps: newReps, 
                     weight_kg: newWeight,
-                    volume: newSets * newReps // Update volume if needed
+                    volume: newSets * newReps // Cập nhật volume nếu cần
                 };
                 try {
-                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData); // Save to Backendless
-                    // Update locally
+                    await Backendless.Data.of('DailyWorkouts').save(updatedWorkoutData); // Lưu vào Backendless
+                    // Cập nhật lại trong mảng workouts cục bộ
                     workouts[workoutIndex].num_sets = newSets; 
                     workouts[workoutIndex].num_reps = newReps; 
                     workouts[workoutIndex].weight_kg = newWeight;
                     workouts[workoutIndex].volume = newSets * newReps;
-                    updateCurrentDayStats(); // Update daily stats
-                    showMessage("Workout details updated!", "success");
-                    closeWorkoutDetailsModal(); // Close modal
-                    renderApp(); // Re-render UI
-                } catch (error) { console.error("Error updating workout details:", error); showMessage("Error updating workout details.", "error"); }
+                    updateCurrentDayWeeklyStat(); // Cập nhật thống kê ngày
+                    showMessage("Đã cập nhật chi tiết bài tập!", "success");
+                    closeWorkoutDetailsModal(); // Đóng modal
+                    renderApp(); // Render lại giao diện
+                } catch (error) { console.error("Lỗi cập nhật chi tiết bài tập:", error); showMessage("Lỗi cập nhật chi tiết bài tập.", "error"); }
             }
         }
 
-        // Render all workout items (master list)
+        // Render nội dung tab "Bài tập của tôi"
+        function renderMyWorkoutsTab() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
+                    <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold">Tất cả bài tập của tôi</h2>
+                        <button id="add-workout-my-workouts-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm bài tập mới</span>
+                        </button></div></div>
+                    <div id="add-new-workout-form-my-workouts" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddWorkoutFormMyWorkouts ? 'block' : 'none'};">
+                        <div class="flex justify-end mb-3"><button id="close-add-form-my-workouts-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="text" id="new-workout-name-my-workouts" placeholder="Tên bài tập" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                            <input type="number" id="new-workout-sets-my-workouts" placeholder="Số Sets" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <input type="number" id="new-workout-reps-my-workouts" placeholder="Số Reps" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="1" />
+                            <input type="number" id="new-workout-default-weight-my-workouts" placeholder="Tạ mặc định (kg)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" min="0" step="0.25" />
+                            <input type="text" id="new-workout-image-url-my-workouts" placeholder="URL hình ảnh (tùy chọn)" class="sm:col-span-3 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                        </div>
+                        <div class="flex space-x-3 mt-3"><button id="add-new-workout-my-workouts-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào danh sách chính</button></div>
+                    </div>
+                    <div id="all-workouts-list-container" class="p-4 space-y-3"></div>
+                </div>`;
+            // Gán sự kiện cho các nút
+            document.getElementById('add-workout-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = true; renderApp(); };
+            if (showAddWorkoutFormMyWorkouts) {
+                document.getElementById('close-add-form-my-workouts-btn').onclick = () => { showAddWorkoutFormMyWorkouts = false; renderApp(); };
+                document.getElementById('add-new-workout-my-workouts-btn').onclick = addNewWorkoutFromMyWorkoutsTab;
+            }
+            renderAllWorkoutItems(); // Render danh sách tất cả bài tập
+            lucide.createIcons();
+        }
+
+        // Render danh sách tất cả bài tập (master list)
         function renderAllWorkoutItems() {
             const cont = document.getElementById('all-workouts-list-container'); if (!cont) return;
             cont.innerHTML = allWorkouts.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có bài tập nào.</p>' : '';
-            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { // Sort by name
+            allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(w => { // Sắp xếp theo tên
                 const item = document.createElement('div'); item.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
                 item.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1 cursor-pointer workout-details-trigger" data-master-id="${w.objectId}" data-workout-name="${w.name}" data-image-url="${w.image_url || ''}">
@@ -963,177 +782,50 @@
                     </div>`;
                 cont.appendChild(item);
             });
-            // Assign events for buttons
+            // Gán sự kiện cho các nút
             document.querySelectorAll('.add-to-today-btn').forEach(b => { b.onclick = (e) => addSelectedWorkoutToToday(e.currentTarget.dataset.id); });
             document.querySelectorAll('.remove-master-workout-btn').forEach(b => { b.onclick = (e) => removeMasterWorkout(e.currentTarget.dataset.id); });
             document.querySelectorAll('#all-workouts-list-container .workout-details-trigger').forEach(el => {
-                // When clicking on workout, show detail modal (history only, no editing)
+                // Khi click vào bài tập, hiển thị modal chi tiết (chỉ lịch sử, không chỉnh sửa)
                 el.onclick = (e) => showWorkoutDetails(e.currentTarget.dataset.masterId, e.currentTarget.dataset.workoutName, e.currentTarget.dataset.imageUrl, null);
             });
             lucide.createIcons();
         }
 
-        // Render content for "Habit" tab
-        function renderHabitTab() {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-lg rounded-xl p-3 border border-green-500/30 text-center">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${getCompletedHabitCount()}</p><p class="text-xs text-green-300">Hoàn thành</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-3 border border-orange-500/30 text-center">
-                        <i data-lucide="flame" class="w-6 h-6 text-orange-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${habitStreak}</p><p class="text-xs text-orange-300">Ngày liên tiếp</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-3 border border-blue-500/30 text-center">
-                        <i data-lucide="trophy" class="w-6 h-6 text-blue-400 mx-auto mb-1"></i>
-                        <p class="text-xl font-bold">${getHabitCompletionRate()}%</p><p class="text-xs text-blue-300">Tiến độ</p>
-                    </div>
-                </div>
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/10">
-                    <div class="flex items-center justify-between mb-3"><h3 class="font-semibold">Tiến độ thói quen hôm nay</h3><span class="text-sm text-gray-400">${getCompletedHabitCount()}/${habits.length}</span></div>
-                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${getHabitCompletionRate()}%"></div></div>
-                    <p class="text-xs text-gray-400 text-center">${getHabitCompletionRate() === 100 && habits.length > 0 ? '🎉 Xuất sắc! Hoàn thành tất cả thói quen!' : habits.length > 0 ? `Còn ${habits.length - getCompletedHabitCount()} thói quen nữa` : 'Thêm thói quen cho hôm nay!'}</p>
-                </div>
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                    <div class="p-4 border-b border-white/10">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-bold">Thói quen hôm nay</h2>
-                            <button id="add-habit-today-btn" class="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
-                                <i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Thêm thói quen</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="add-new-habit-form-today" class="p-4 bg-gray-800/50 border-b border-white/10" style="display: ${showAddHabitFormToday ? 'block' : 'none'};">
-                        <div class="flex justify-end mb-3"><button id="close-add-habit-form-today-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-                        <input type="text" id="new-habit-name-today" placeholder="Tên thói quen (ví dụ: Tắm, Giặt đồ, Ngủ trước 11h đêm)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 mb-3" />
-                        <div class="flex space-x-3 mt-3"><button id="add-new-habit-today-btn" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm">Thêm vào hôm nay</button></div>
-                    </div>
-                    <div id="habit-list-container" class="p-4 space-y-3"></div>
-                </div>
-
-                <div class="bg-black/30 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6">
-                    <div class="p-4 border-b border-white/10"><div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold">Tất cả thói quen của tôi</h2>
-                        </div></div>
-                    <div id="all-habits-list-container" class="p-4 space-y-3"></div>
-                </div>
-            `;
-            // Assign events for buttons
-            document.getElementById('add-habit-today-btn').onclick = () => { showAddHabitFormToday = true; renderApp(); };
-            if (showAddHabitFormToday) {
-                document.getElementById('close-add-habit-form-today-btn').onclick = () => { showAddHabitFormToday = false; renderApp(); };
-                document.getElementById('add-new-habit-today-btn').onclick = addNewHabitFromTodayTab;
-            }
-            renderHabitItems(); // Render daily habit list
-            renderAllHabitItems(); // Render all habit list
-            lucide.createIcons();
-        }
-
-        // Render daily habit items
-        function renderHabitItems() {
-            const habitListContainer = document.getElementById('habit-list-container');
-            if (!habitListContainer) return;
-            habitListContainer.innerHTML = habits.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có thói quen nào.</p>' : '';
-
-            habits.forEach(habit => {
-                const habitItem = document.createElement('div');
-                habitItem.className = `group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${habit.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700'}`;
-                
-                habitItem.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
-                        <button class="toggle-habit-btn transition-colors hover:scale-110 transform flex-shrink-0" data-id="${habit.objectId}">
-                            ${habit.completed ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>' : '<i data-lucide="circle" class="w-5 h-5 text-gray-400 hover:text-green-400"></i>'}
-                        </button>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-medium text-sm ${habit.completed ? 'text-green-400 line-through' : 'text-white'} truncate">${habit.name}</h3>
-                        </div>
-                    </div>
-                    <button class="remove-habit-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 ml-2 flex-shrink-0" data-id="${habit.objectId}"><i data-lucide="x" class="w-4 h-4"></i></button>`;
-                habitListContainer.appendChild(habitItem);
-            });
-            // Assign events for toggle and remove buttons
-            document.querySelectorAll('.toggle-habit-btn').forEach(b => { b.onclick = (e) => toggleHabit(e.currentTarget.dataset.id); });
-            document.querySelectorAll('.remove-habit-btn').forEach(b => { b.onclick = (e) => removeHabit(e.currentTarget.dataset.id); });
-            lucide.createIcons();
-        }
-
-        // Render all habit items (master list)
-        function renderAllHabitItems() {
-            const cont = document.getElementById('all-habits-list-container'); if (!cont) return;
-            cont.innerHTML = allHabits.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có thói quen nào.</p>' : '';
-            allHabits.sort((a,b) => (a.name || "").localeCompare(b.name || "")).forEach(h => { // Sort by name
-                const item = document.createElement('div'); item.className = `flex items-center justify-between p-3 rounded-xl border bg-gray-800/50 border-gray-700`;
-                item.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1">
-                        <div class="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-lg flex-shrink-0"><i data-lucide="check-square" class="w-6 h-6 text-gray-400"></i></div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-medium text-sm text-white truncate">${h.name}</h3>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 ml-2 flex-shrink-0">
-                        <button class="add-habit-to-today-btn bg-green-500 hover:bg-green-600 p-2 rounded-lg text-xs transition-colors" data-id="${h.objectId}"><i data-lucide="calendar-plus" class="w-4 h-4"></i></button>
-                        <button class="remove-master-habit-btn text-red-400 hover:text-red-300 transition-all duration-200" data-id="${h.objectId}"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>`;
-                cont.appendChild(item);
-            });
-            // Assign events for buttons
-            document.querySelectorAll('.add-habit-to-today-btn').forEach(b => { b.onclick = (e) => addSelectedHabitToToday(e.currentTarget.dataset.id); });
-            document.querySelectorAll('.remove-master-habit-btn').forEach(b => { b.onclick = (e) => removeMasterHabit(e.currentTarget.dataset.id); });
-            lucide.createIcons();
-        }
-
-        // Render content for "Stats" tab
+        // Render nội dung tab "Thống kê"
         function renderStatsTab() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
                 <div class="space-y-6">
-                    <h2 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Thống kê tổng quan</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30 text-center">
-                            <i data-lucide="activity" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompletedWorkouts()}</p><p class="text-xs text-purple-300">Bài tập (7 ngày)</p></div>
+                            <i data-lucide="activity" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompleted()}</p><p class="text-xs text-purple-300">Bài tập (7 ngày)</p></div>
                         <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30 text-center">
-                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyWorkoutAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
-                        <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-xl p-4 border border-purple-500/30 text-center">
-                            <i data-lucide="check-square" class="w-8 h-8 text-purple-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getCurrentWeekTotalCompletedHabits()}</p><p class="text-xs text-purple-300">Thói quen (7 ngày)</p></div>
-                        <div class="bg-gradient-to-br from-green-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 border border-green-500/30 text-center">
-                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyHabitAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
+                            <i data-lucide="award" class="w-8 h-8 text-green-400 mx-auto mb-2"></i><p class="text-2xl font-bold">${getWeeklyAverage()}%</p><p class="text-xs text-green-300">TB hoàn thành (7 ngày)</p></div>
                     </div>
-
                     <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-purple-400"></i>Lịch sử tập luyện</h3>
-                        <div id="weekly-workout-stats-container" class="space-y-3"></div></div>
-                    
-                    <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-blue-400"></i>Lịch sử thói quen</h3>
-                        <div id="weekly-habit-stats-container" class="space-y-3"></div></div>
-
+                        <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-purple-400"></i>Lịch sử hoạt động</h3>
+                        <div id="weekly-stats-container" class="space-y-3"></div></div>
                     <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
                         <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="trophy" class="w-5 h-5 mr-2 text-yellow-400"></i>Thành tích</h3>
                         <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày tập luyện liên tiếp</p><p class="text-sm text-gray-400">Tập luyện đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${streak} ngày</span></div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày tập tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveWorkoutDay()}</span></div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày liên tiếp</p><p class="text-sm text-gray-400">Tập luyện đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${streak} ngày</span></div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveDay()}</span></div>
                             <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng bài tập</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalWorkouts}</span></div>
-                            
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-orange-500/20 rounded-lg"><i data-lucide="check-square" class="w-5 h-5 text-orange-400"></i></div><div><p class="font-medium">Chuỗi ngày thói quen liên tiếp</p><p class="text-sm text-gray-400">Hoàn thành thói quen đều đặn</p></div></div><span class="text-xl font-bold text-orange-400">${habitStreak} ngày</span></div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-green-500/20 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-400"></i></div><div><p class="font-medium">Ngày thói quen tích cực nhất</p><p class="text-sm text-gray-400">Hoàn thành nhiều nhất</p></div></div><span class="text-sm font-bold text-green-400">${getMostActiveHabitDay()}</span></div>
-                            <div class="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg"><div class="flex items-center space-x-3"><div class="p-2 bg-blue-500/20 rounded-lg"><i data-lucide="check-circle" class="w-5 h-5 text-blue-400"></i></div><div><p class="font-medium">Tổng thói quen hoàn thành</p><p class="text-sm text-gray-400">Từ khi bắt đầu</p></div></div><span class="text-xl font-bold text-blue-400">${totalHabitsCompleted}</span></div>
                         </div></div></div>`;
-            renderWeeklyWorkoutStatsHistory(); // Render workout stats history
-            renderWeeklyHabitStatsHistory(); // Render habit stats history
+            renderWeeklyStatsHistory(); // Render lịch sử thống kê tuần
             lucide.createIcons();
         }
 
-        // Render workout stats history
-        function renderWeeklyWorkoutStatsHistory() {
-            const cont = document.getElementById('weekly-workout-stats-container'); if (!cont) return;
-            cont.innerHTML = weeklyStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê bài tập.</p>' : '';
+        // Render lịch sử thống kê tuần
+        function renderWeeklyStatsHistory() {
+            const cont = document.getElementById('weekly-stats-container'); if (!cont) return;
+            cont.innerHTML = weeklyStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê.</p>' : '';
             weeklyStats.forEach(day => {
                 const perc = day.total > 0 ? (day.completed / day.total) * 100 : 0;
                 const isToday = day.date === getTodayDateString();
                 const item = document.createElement('div');
-                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-gray-800/50'}`; // Highlight current day
+                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-gray-800/50'}`; // Highlight ngày hiện tại
                 item.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center space-x-2"><span class="text-sm font-medium">${formatDate(day.date)}${isToday && day.date === currentDayString ? '<span class="text-purple-400 ml-1">(Hôm nay)</span>' : ''}</span></div>
@@ -1145,56 +837,35 @@
             lucide.createIcons();
         }
 
-        // Render habit stats history
-        function renderWeeklyHabitStatsHistory() {
-            const cont = document.getElementById('weekly-habit-stats-container'); if (!cont) return;
-            cont.innerHTML = weeklyHabitStats.length === 0 ? '<p class="text-center text-gray-400 py-4">Chưa có dữ liệu thống kê thói quen.</p>' : '';
-            weeklyHabitStats.forEach(day => {
-                const perc = day.total > 0 ? (day.completed / day.total) * 100 : 0;
-                const isToday = day.date === getTodayDateString();
-                const item = document.createElement('div');
-                item.className = `p-3 rounded-lg ${isToday && day.date === currentDayString ? 'bg-blue-500/20 border border-blue-500/30' : 'bg-gray-800/50'}`; // Highlight current day
-                item.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center space-x-2"><span class="text-sm font-medium">${formatDate(day.date)}${isToday && day.date === currentDayString ? '<span class="text-blue-400 ml-1">(Hôm nay)</span>' : ''}</span></div>
-                        <span class="text-sm text-gray-400">${day.completed}/${day.total}</span></div>
-                    <div class="w-full bg-gray-700 rounded-full h-2 mb-1"><div class="bg-gradient-to-r from-green-400 to-purple-500 h-2 rounded-full transition-all duration-500" style="width: ${perc}%"></div></div>
-                    ${day.habits && day.habits.length > 0 ? `<div class="flex flex-wrap gap-1 mt-2">${day.habits.slice(0,3).map(h => `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs whitespace-nowrap">${h}</span>`).join('')}${day.habits.length > 3 ? `<span class="px-2 py-0.5 bg-gray-700/80 rounded text-xs">+${day.habits.length - 3}</span>` : ''}</div>` : '<p class="text-xs text-gray-500 italic mt-1">Không có thói quen.</p>'}`;
-                cont.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-
-        // Render the entire application (bottom nav and current tab content)
+        // Render toàn bộ ứng dụng (header và tab hiện tại)
         function renderApp() {
             document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
-            renderBottomNav();
-            if (currentTab === 'workout') renderWorkoutTab();
-            else if (currentTab === 'habit') renderHabitTab();
-            else if (currentTab === 'stats') renderStatsTab();
-            lucide.createIcons(); // Ensure icons are rendered after each DOM update
+            renderHeader();
+            if (currentTab === 'today') renderTodayTab();
+            else if (currentTab === 'my-workouts') renderMyWorkoutsTab();
+            else renderStatsTab();
+            lucide.createIcons(); // Đảm bảo icons được render sau mỗi lần cập nhật DOM
         }
 
-        // Toggle workout completion status
+        // Chuyển đổi trạng thái hoàn thành của bài tập
         async function toggleWorkout(objectId) {
             const idx = workouts.findIndex(w => w.objectId === objectId);
             if (idx > -1) {
                 const newStatus = !workouts[idx].completed; 
                 try { 
-                    await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); // Save to Backendless
-                    workouts[idx].completed = newStatus; // Update locally
-                    updateCurrentDayStats(); // Update stats
-                    renderApp(); // Re-render
+                    await Backendless.Data.of('DailyWorkouts').save({ objectId: objectId, completed: newStatus }); // Lưu vào Backendless
+                    workouts[idx].completed = newStatus; // Cập nhật cục bộ
+                    updateCurrentDayWeeklyStat(); // Cập nhật thống kê
+                    renderApp(); // Render lại
                 }
                 catch (e) { 
-                    console.error("Error toggling workout:", e); 
-                    showMessage("Error updating workout status.", "error"); 
+                    console.error("Lỗi toggle workout:", e); 
+                    showMessage("Lỗi cập nhật trạng thái bài tập.", "error"); 
                 }
             }
         }
 
-        // Add new workout from "Today" tab
+        // Thêm bài tập mới từ tab "Hôm nay"
         async function addNewWorkoutFromTodayTab() {
             const name = document.getElementById('new-workout-name-today').value.trim();
             const setsStr = document.getElementById('new-workout-sets-today').value.trim();
@@ -1205,30 +876,31 @@
             const sets = parseInt(setsStr);
             const reps = parseInt(repsStr);
             let weight = parseFloat(weightStr);
-            if (isNaN(weight) || weight < 0) weight = 0; // Default weight to 0 if invalid
+            if (isNaN(weight) || weight < 0) weight = 0; // Mặc định tạ là 0 nếu không hợp lệ
 
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
-                showMessage("Name, Sets, Reps are invalid!", "error"); return; 
+                showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
             
             let masterId;
-            // Check if this workout already exists in the master list (AllWorkouts) (based on name)
-            let existingMaster = allWorkouts.find(w => w.name === name); // Simple match by name
+            // Kiểm tra xem bài tập này đã có trong danh sách chính (AllWorkouts) chưa (dựa trên tên)
+            let existingMaster = allWorkouts.find(w => w.name === name); // So khớp đơn giản bằng tên
             
             if (existingMaster) {
-                masterId = existingMaster.objectId; // Use existing masterId
+                masterId = existingMaster.objectId; // Sử dụng masterId hiện có
             } else {
-                // If not, create new in AllWorkouts
+                // Nếu chưa có, tạo mới trong AllWorkouts
                 try { 
                     const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: weight, image_url: img };
+                    // if(userId) masterPayload.ownerId = userId; // Nếu AllWorkouts là của riêng người dùng
                     const savedMaster = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                     masterId = savedMaster.objectId; 
-                    allWorkouts.push(savedMaster); // Add to local list
+                    allWorkouts.push(savedMaster); // Thêm vào danh sách cục bộ
                 }
-                catch(e) { console.error("Error adding master workout:", e); showMessage("Error adding master workout.", "error"); return; }
+                catch(e) { console.error("Lỗi thêm master workout:", e); showMessage("Lỗi thêm bài tập chính.", "error"); return; }
             }
 
-            // Create record for DailyWorkouts
+            // Tạo bản ghi cho DailyWorkouts
             const dailyPayload = { 
                 master_id: masterId, 
                 ownerId: userId, 
@@ -1236,8 +908,8 @@
                 num_sets: sets, 
                 num_reps: reps, 
                 weight_kg: weight,
-                volume: sets * reps, // Calculate volume
-                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Prioritize new image, otherwise use master image
+                volume: sets * reps, // Tính volume
+                image_url: img || (existingMaster ? existingMaster.image_url : ''), // Ưu tiên ảnh mới, nếu không có thì lấy ảnh từ master
                 completed: false, 
                 workout_date: getTodayDateString() 
             };
@@ -1246,16 +918,16 @@
                 const newDaily = await Backendless.Data.of('DailyWorkouts').save(dailyPayload); 
                 workouts.push(newDaily); 
                 totalWorkouts++; 
-                updateCurrentDayStats(); 
-                showMessage("Workout added for today!", "success");
-                // Clear input fields
+                updateCurrentDayWeeklyStat(); 
+                showMessage("Đã thêm bài tập cho hôm nay!", "success");
+                // Xóa các trường input
                 ['new-workout-name-today', 'new-workout-sets-today', 'new-workout-reps-today', 'new-workout-weight-today', 'new-workout-image-url-today'].forEach(id => document.getElementById(id).value = '');
-                showAddWorkoutFormToday = false; // Hide form
+                showAddWorkoutFormToday = false; // Ẩn form
                 renderApp();
-            } catch (e) { console.error("Error adding daily workout:", e); showMessage("Error adding workout for today.", "error"); }
+            } catch (e) { console.error("Lỗi thêm daily workout:", e); showMessage("Lỗi thêm bài tập hôm nay.", "error"); }
         }
 
-        // Add new workout from "My Workouts" tab (add to master list AllWorkouts)
+        // Thêm bài tập mới từ tab "Bài tập của tôi" (thêm vào danh sách chính AllWorkouts)
         async function addNewWorkoutFromMyWorkoutsTab() {
             const name = document.getElementById('new-workout-name-my-workouts').value.trim();
             const setsStr = document.getElementById('new-workout-sets-my-workouts').value.trim();
@@ -1269,30 +941,31 @@
             if (isNaN(defaultWeight) || defaultWeight < 0) defaultWeight = 0;
 
             if (!name || isNaN(sets) || isNaN(reps) || sets <= 0 || reps <= 0) { 
-                showMessage("Name, Sets, Reps are invalid!", "error"); return; 
+                showMessage("Tên, Sets, Reps không hợp lệ!", "error"); return; 
             }
-            // Check for duplicates in master list
+            // Kiểm tra trùng lặp trong danh sách chính
             if (allWorkouts.some(w => w.name === name && w.num_sets === sets && w.num_reps === reps && (w.default_weight_kg || 0) === defaultWeight)) { 
-                showMessage("This workout already exists in the master list!", "info"); return; 
+                showMessage("Bài tập này đã tồn tại trong danh sách chính!", "info"); return; 
             }
             try {
                 const masterPayload = { name, num_sets: sets, num_reps: reps, default_weight_kg: defaultWeight, image_url: img };
+                // if(userId) masterPayload.ownerId = userId; // Nếu AllWorkouts là của riêng người dùng
                 const saved = await Backendless.Data.of('AllWorkouts').save(masterPayload); 
                 allWorkouts.push(saved);
-                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Sort
-                showMessage("Added to master list!", "success");
-                // Clear input fields
+                allWorkouts.sort((a,b) => (a.name || "").localeCompare(b.name || "")); // Sắp xếp lại
+                showMessage("Đã thêm vào danh sách chính!", "success");
+                // Xóa các trường input
                 ['new-workout-name-my-workouts', 'new-workout-sets-my-workouts', 'new-workout-reps-my-workouts', 'new-workout-default-weight-my-workouts', 'new-workout-image-url-my-workouts'].forEach(id => document.getElementById(id).value = '');
-                showAddWorkoutFormMyWorkouts = false; // Hide form
+                showAddWorkoutFormMyWorkouts = false; // Ẩn form
                 renderApp();
-            } catch (e) { console.error("Error adding master workout:", e); showMessage("Error adding workout to master list.", "error"); }
+            } catch (e) { console.error("Lỗi thêm master workout:", e); showMessage("Lỗi thêm bài tập vào danh sách chính.", "error"); }
         }
 
-        // Add selected workout from master list to today's list
+        // Thêm bài tập đã chọn từ danh sách chính vào danh sách hôm nay
         async function addSelectedWorkoutToToday(masterWorkoutObjectId) {
             const workoutToAdd = allWorkouts.find(w => w.objectId === masterWorkoutObjectId);
             if (workoutToAdd) {
-                // Check if this workout (based on master_id) already exists in today's list
+                // Kiểm tra xem bài tập này (dựa trên master_id) đã có trong danh sách hôm nay chưa
                 if (!workouts.some(w => w.master_id === masterWorkoutObjectId && w.workout_date === getTodayDateString())) {
                     const dailyPayload = { 
                         master_id: masterWorkoutObjectId, 
@@ -1300,7 +973,7 @@
                         name: workoutToAdd.name, 
                         num_sets: workoutToAdd.num_sets, 
                         num_reps: workoutToAdd.num_reps, 
-                        weight_kg: workoutToAdd.default_weight_kg != null ? workoutToAdd.default_weight_kg : 0, // Get default weight
+                        weight_kg: workoutToAdd.default_weight_kg != null ? workoutToAdd.default_weight_kg : 0, // Lấy tạ mặc định
                         volume: (workoutToAdd.num_sets || 0) * (workoutToAdd.num_reps || 0), 
                         image_url: workoutToAdd.image_url || '', 
                         completed: false, 
@@ -1310,223 +983,124 @@
                         const newDaily = await Backendless.Data.of('DailyWorkouts').save(dailyPayload); 
                         workouts.push(newDaily); 
                         totalWorkouts++; 
-                        updateCurrentDayStats(); 
-                        showMessage("Added to today's workouts!", "success"); 
+                        updateCurrentDayWeeklyStat(); 
+                        showMessage("Đã thêm vào bài tập hôm nay!", "success"); 
                         renderApp(); 
                     }
-                    catch (e) { console.error("Error adding selected workout to today:", e); showMessage("Error adding workout to today.", "error"); }
-                } else showMessage("This workout is already in today's list!", "info");
+                    catch (e) { console.error("Lỗi thêm selected workout to today:", e); showMessage("Lỗi thêm bài tập vào hôm nay.", "error"); }
+                } else showMessage("Bài tập này đã có trong danh sách hôm nay!", "info");
             }
         }
 
-        // Remove workout from today's list
+        // Xóa bài tập khỏi danh sách hôm nay
         async function removeWorkout(objectId) { 
             try { 
                 await Backendless.Data.of('DailyWorkouts').remove({ objectId }); 
                 workouts = workouts.filter(w => w.objectId !== objectId); 
-                updateCurrentDayStats(); 
-                showMessage("Workout removed from today.", "success"); 
+                updateCurrentDayWeeklyStat(); 
+                showMessage("Đã xóa bài tập khỏi hôm nay.", "success"); 
                 renderApp(); 
             }
-            catch (e) { console.error("Error removing daily workout:", e); showMessage("Error removing workout.", "error"); }
+            catch (e) { console.error("Lỗi xóa daily workout:", e); showMessage("Lỗi xóa bài tập.", "error"); }
         }
-        // Remove workout from master list (AllWorkouts)
+        // Xóa bài tập khỏi danh sách chính (AllWorkouts)
         async function removeMasterWorkout(objectId) { 
-             if (!confirm("Are you sure you want to delete this workout from the master list? This action will also remove this workout from your workout history (if any).")) {
+            // Sử dụng một hộp thoại xác nhận tùy chỉnh thay vì window.confirm
+            // Ví dụ: hiển thị một modal xác nhận
+            // Hiện tại, để đơn giản, bỏ qua bước xác nhận hoặc bạn có thể tự thêm
+            // if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?")) {
+            //     return;
+            // }
+            // Thay vì confirm, bạn có thể hiển thị một modal tùy chỉnh ở đây
+            // và chỉ thực hiện xóa nếu người dùng xác nhận trong modal đó.
+            // Ví dụ:
+            // showCustomConfirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính?", async () => {
+            //    // logic xóa ở đây
+            // });
+            // return; // Chờ xác nhận từ modal
+            
+            // Tạm thời vẫn dùng cách cũ, nhưng khuyến khích dùng modal tùy chỉnh
+             if (!confirm("Bạn có chắc chắn muốn xóa bài tập này khỏi danh sách chính? Thao tác này cũng sẽ xóa bài tập này khỏi lịch sử tập luyện của bạn (nếu có).")) {
                  return;
              }
+
+
             try { 
                 await Backendless.Data.of('AllWorkouts').remove({ objectId }); 
                 allWorkouts = allWorkouts.filter(w => w.objectId !== objectId); 
-                // Optional: Remove this workout from today's list if present
+                // Tùy chọn: Xóa bài tập này khỏi danh sách hôm nay nếu có
                 const wasInToday = workouts.some(w => w.master_id === objectId);
                 workouts = workouts.filter(w => w.master_id !== objectId);
-                if (wasInToday) updateCurrentDayStats();
+                if (wasInToday) updateCurrentDayWeeklyStat();
 
-                showMessage("Workout removed from master list.", "success"); 
+                // Tùy chọn: Xóa khỏi lịch sử (DailyWorkouts) của tất cả các ngày
+                // const relatedDailyQuery = Backendless.DataQueryBuilder.create().setWhereClause(`master_id = '${objectId}' AND ownerId = '${userId}'`);
+                // await Backendless.Data.of('DailyWorkouts').bulkDelete(relatedDailyQuery);
+                // Cần tải lại weeklyStats nếu muốn nó phản ánh việc xóa khỏi lịch sử
+
+                showMessage("Đã xóa bài tập khỏi danh sách chính.", "success"); 
                 renderApp(); 
             }
-            catch (e) { console.error("Error removing master workout:", e); showMessage("Error removing workout from master list.", "error"); }
+            catch (e) { console.error("Lỗi xóa master workout:", e); showMessage("Lỗi xóa bài tập khỏi danh sách chính.", "error"); }
         }
 
-        // Add new habit from "Habit" tab
-        async function addNewHabitFromTodayTab() {
-            const name = document.getElementById('new-habit-name-today').value.trim();
-
-            if (!name) { 
-                showMessage("Habit name cannot be empty!", "error"); return; 
-            }
-            
-            let masterId;
-            // Check if this habit already exists in the master list (AllHabits) (based on name)
-            let existingMaster = allHabits.find(h => h.name === name); // Simple match by name
-            
-            if (existingMaster) {
-                masterId = existingMaster.objectId; // Use existing masterId
-            } else {
-                // If not, create new in AllHabits
-                try { 
-                    const masterPayload = { name };
-                    const savedMaster = await Backendless.Data.of('AllHabits').save(masterPayload); 
-                    masterId = savedMaster.objectId; 
-                    allHabits.push(savedMaster); // Add to local list
-                }
-                catch(e) { console.error("Error adding master habit:", e); showMessage("Error adding master habit.", "error"); return; }
-            }
-
-            // Create record for DailyHabits
-            const dailyPayload = { 
-                master_id: masterId, 
-                ownerId: userId, 
-                name, 
-                completed: false, 
-                habit_date: getTodayDateString() 
-            };
-
-            try {
-                const newDaily = await Backendless.Data.of('DailyHabits').save(dailyPayload); 
-                habits.push(newDaily); 
-                updateCurrentDayStats(); 
-                showMessage("Habit added for today!", "success");
-                // Clear input field
-                document.getElementById('new-habit-name-today').value = '';
-                showAddHabitFormToday = false; // Hide form
-                renderApp();
-            } catch (e) { console.error("Error adding daily habit:", e); showMessage("Error adding habit for today.", "error"); }
-        }
-
-        // Add selected habit from master list to today's list
-        async function addSelectedHabitToToday(masterHabitObjectId) {
-            const habitToAdd = allHabits.find(h => h.objectId === masterHabitObjectId);
-            if (habitToAdd) {
-                // Check if this habit (based on master_id) already exists in today's list
-                if (!habits.some(h => h.master_id === masterHabitObjectId && h.habit_date === getTodayDateString())) {
-                    const dailyPayload = { 
-                        master_id: masterHabitObjectId, 
-                        ownerId: userId, 
-                        name: habitToAdd.name, 
-                        completed: false, 
-                        habit_date: getTodayDateString() 
-                    };
-                    try { 
-                        const newDaily = await Backendless.Data.of('DailyHabits').save(dailyPayload); 
-                        habits.push(newDaily); 
-                        updateCurrentDayStats(); 
-                        showMessage("Added to today's habits!", "success"); 
-                        renderApp(); 
-                    }
-                    catch (e) { console.error("Error adding selected habit to today:", e); showMessage("Error adding habit to today.", "error"); }
-                } else showMessage("This habit is already in today's list!", "info");
-            }
-        }
-
-        // Toggle habit completion status
-        async function toggleHabit(objectId) {
-            const idx = habits.findIndex(h => h.objectId === objectId);
-            if (idx > -1) {
-                const newStatus = !habits[idx].completed; 
-                try { 
-                    await Backendless.Data.of('DailyHabits').save({ objectId: objectId, completed: newStatus }); // Save to Backendless
-                    habits[idx].completed = newStatus; // Update locally
-                    updateCurrentDayStats(); // Update stats
-                    renderApp(); // Re-render
-                }
-                catch (e) { 
-                    console.error("Error toggling habit:", e); 
-                    showMessage("Error updating habit status.", "error"); 
-                }
-            }
-        }
-
-        // Remove habit from today's list
-        async function removeHabit(objectId) { 
-            try { 
-                await Backendless.Data.of('DailyHabits').remove({ objectId }); 
-                habits = habits.filter(h => h.objectId !== objectId); 
-                updateCurrentDayStats(); 
-                showMessage("Habit removed from today.", "success"); 
-                renderApp(); 
-            }
-            catch (e) { console.error("Error removing daily habit:", e); showMessage("Error removing habit.", "error"); }
-        }
-
-        // Remove habit from master list (AllHabits)
-        async function removeMasterHabit(objectId) { 
-             if (!confirm("Are you sure you want to delete this habit from the master list? This action will also remove this habit from your habit history (if any).")) {
-                 return;
-             }
-            try { 
-                await Backendless.Data.of('AllHabits').remove({ objectId }); 
-                allHabits = allHabits.filter(h => h.objectId !== objectId); 
-                // Optional: Remove this habit from today's list if present
-                const wasInToday = habits.some(h => h.master_id === objectId);
-                habits = habits.filter(h => h.master_id !== objectId);
-                if (wasInToday) updateCurrentDayStats();
-
-                showMessage("Habit removed from master list.", "success"); 
-                renderApp(); 
-            }
-            catch (e) { console.error("Error removing master habit:", e); showMessage("Error removing habit from master list.", "error"); }
-        }
-
-
-        // Handle sign up
+        // Xử lý đăng ký
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
-            if (!email || !pass) { showMessage("Please enter email and password.", "error"); return; }
+            if (!email || !pass) { showMessage("Vui lòng nhập email và mật khẩu.", "error"); return; }
             const user = new Backendless.User(); user.email = email; user.password = pass;
             try { 
                 await Backendless.UserService.register(user); 
-                showMessage("Registration successful! Please check your email for verification (if configured). Then log in.", "success"); 
+                showMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác thực (nếu được cấu hình). Sau đó đăng nhập.", "success"); 
             }
-            catch (e) { showMessage(`Registration failed: ${e.message}`, "error"); console.error("Registration Error:", e); }
+            catch (e) { showMessage(`Đăng ký thất bại: ${e.message}`, "error"); console.error("Lỗi Đăng ký:", e); }
         }
-        // Handle sign in
+        // Xử lý đăng nhập
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
-            if (!email || !pass) { showMessage("Please enter email and password.", "error"); return; }
+            if (!email || !pass) { showMessage("Vui lòng nhập email và mật khẩu.", "error"); return; }
             try { 
-                const user = await Backendless.UserService.login(email, pass, true); // true to remember login
+                const user = await Backendless.UserService.login(email, pass, true); // true để ghi nhớ đăng nhập
                 userId = user.objectId;
-                showMessage("Login successful!", "success");
+                showMessage("Đăng nhập thành công!", "success");
                 document.getElementById('auth-container').style.display = 'none'; 
                 document.getElementById('app-container').style.display = 'block';
-                currentDayString = getTodayDateString(); // Reset current day after login
-                await loadDataFromBackendless(); // Load data for new user
-                initializeAppAndHandleDailyRollover(); // Handle daily rollover
+                currentDayString = getTodayDateString(); // Đặt lại ngày hiện tại sau khi đăng nhập
+                await loadDataFromBackendless(); // Tải dữ liệu cho người dùng mới
+                initializeAppAndHandleDailyRollover(); // Xử lý chuyển ngày
                 renderApp();
-            } catch (e) { showMessage(`Login failed: ${e.message}`, "error"); console.error("Login Error:", e); }
+            } catch (e) { showMessage(`Đăng nhập thất bại: ${e.message}`, "error"); console.error("Lỗi Đăng nhập:", e); }
         }
 
-        // Event when DOM is loaded
+        // Sự kiện khi DOM đã tải xong
         document.addEventListener('DOMContentLoaded', async () => {
-            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); // Update clock every 30 seconds
+            updateLiveDateTime(); setInterval(updateLiveDateTime, 1000 * 30); // Cập nhật đồng hồ mỗi 30 giây
             try {
                 isLoading = true; 
                 document.getElementById('loading-overlay').style.display = 'flex';
-                lucide.createIcons(); // Create initial icons
+                lucide.createIcons(); // Tạo icons ban đầu
 
-                const currentUser = await Backendless.UserService.getCurrentUser(); // Check if user is logged in
+                const currentUser = await Backendless.UserService.getCurrentUser(); // Kiểm tra xem người dùng đã đăng nhập chưa
                 if (currentUser) {
                     userId = currentUser.objectId;
-                    document.getElementById('auth-container').style.display = 'none'; // Hide login/signup form
-                    document.getElementById('app-container').style.display = 'block'; // Show app
+                    document.getElementById('auth-container').style.display = 'none'; // Ẩn form đăng nhập/đăng ký
+                    document.getElementById('app-container').style.display = 'block'; // Hiển thị ứng dụng
                     currentDayString = getTodayDateString(); 
                     await loadDataFromBackendless(); 
                     initializeAppAndHandleDailyRollover(); 
                     renderApp();
                 } else {
-                    // User not logged in
+                    // Người dùng chưa đăng nhập
                     userId = null; 
-                    document.getElementById('auth-container').style.display = 'flex'; // Show login/signup form
-                    document.getElementById('app-container').style.display = 'none'; // Hide app
+                    document.getElementById('auth-container').style.display = 'flex'; // Hiển thị form đăng nhập/đăng ký
+                    document.getElementById('app-container').style.display = 'none'; // Ẩn ứng dụng
                     isLoading = false; 
-                    document.getElementById('loading-overlay').style.display = 'none'; // Hide loading
-                    lucide.createIcons(); // Create icons for login form
+                    document.getElementById('loading-overlay').style.display = 'none'; // Ẩn loading
+                    lucide.createIcons(); // Tạo icons cho form đăng nhập
                 }
             } catch (e) {
-                // Handle error if current user cannot be checked (e.g., connection lost)
-                console.error("Error checking login status:", e); 
+                // Xử lý lỗi nếu không kiểm tra được người dùng hiện tại (ví dụ: mất kết nối)
+                console.error("Lỗi kiểm tra đăng nhập:", e); 
                 userId = null;
                 document.getElementById('auth-container').style.display = 'flex'; 
                 document.getElementById('app-container').style.display = 'none';
@@ -1534,44 +1108,43 @@
                 document.getElementById('loading-overlay').style.display = 'none'; 
                 lucide.createIcons();
             } finally {
-                // Ensure loading overlay is always hidden if not loading
+                // Đảm bảo overlay loading luôn được ẩn nếu không còn loading
                 if (!isLoading && document.getElementById('loading-overlay').style.display !== 'none') {
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
             }
 
-            // Assign events for signup, signin buttons
+            // Gán sự kiện cho các nút đăng ký, đăng nhập
             document.getElementById('signup-btn').addEventListener('click', handleSignUp);
             document.getElementById('signin-btn').addEventListener('click', handleSignIn);
             
-            // Assign events for bottom nav tabs
-            ['workout', 'habit', 'stats'].forEach(tab => {
+            // Gán sự kiện cho các nút tab
+            ['today', 'my-workouts', 'stats'].forEach(tab => {
                 const btn = document.getElementById(`${tab}-tab-btn`);
                 if(btn) btn.addEventListener('click', () => {
                     currentTab = tab; 
-                    showAddWorkoutFormToday = false; // Reset form state when switching tabs
+                    showAddWorkoutFormToday = false; // Reset trạng thái form khi chuyển tab
                     showAddWorkoutFormMyWorkouts = false; 
-                    showAddHabitFormToday = false; // Reset habit form state
                     renderApp();
                 });
             });
 
-            // Assign event for close modal button
+            // Gán sự kiện cho nút đóng modal
             const closeModalButton = document.getElementById('close-workout-detail-modal');
             if(closeModalButton) closeModalButton.addEventListener('click', closeWorkoutDetailsModal);
             
-            // Assign event to close modal when clicking outside (on overlay)
+            // Gán sự kiện đóng modal khi click ra ngoài (vào overlay)
             const modalOverlay = document.getElementById('workout-detail-modal');
             if(modalOverlay) modalOverlay.addEventListener('click', (e) => { 
-                if (e.target === e.currentTarget) closeWorkoutDetailsModal(); // Only close if clicking directly on overlay
+                if (e.target === e.currentTarget) closeWorkoutDetailsModal(); // Chỉ đóng nếu click trực tiếp vào overlay
             });
             
-            // If both app and auth are hidden (rare case), still create icons
+            // Nếu cả app và auth đều ẩn (trường hợp hiếm), vẫn tạo icons
             if(document.getElementById('app-container').style.display === 'none' && document.getElementById('auth-container').style.display === 'none'){
                  lucide.createIcons();
             }
         });
-        // Re-create icons when window resizes (to ensure correct display)
+        // Tạo lại icons khi thay đổi kích thước cửa sổ (để đảm bảo hiển thị đúng)
         window.addEventListener('resize', () => { lucide.createIcons(); }); 
     </script>
 </body>
